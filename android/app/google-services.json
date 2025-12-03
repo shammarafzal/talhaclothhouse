@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "501011440652",
+    "project_id": "talhaclothhouse",
+    "storage_bucket": "talhaclothhouse.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501011440652:android:19ce289bd9b6424fa83a29",
+        "android_client_info": {
+          "package_name": "net.ammarafzal.talhaclothhouse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWYylDchayT1H5NRL80weanlPLRhxBrlk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
