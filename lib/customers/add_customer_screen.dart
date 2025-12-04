@@ -1,69 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AddSupplierScreen extends StatefulWidget {
-  final String? supplierId; // null = add new, not null = edit
-  final Map<String, dynamic>? supplierData;
+class AddCustomerScreen extends StatefulWidget {
+  final String? customerId;
+  final Map<String, dynamic>? customerData;
 
-  const AddSupplierScreen({
+  const AddCustomerScreen({
     super.key,
-    this.supplierId,
-    this.supplierData,
+    this.customerId,
+    this.customerData,
   });
 
-  bool get isEdit => supplierId != null;
+  bool get isEdit => customerId != null;
 
   @override
-  State<AddSupplierScreen> createState() => _AddSupplierScreenState();
+  State<AddCustomerScreen> createState() => _AddCustomerScreenState();
 }
 
-class _AddSupplierScreenState extends State<AddSupplierScreen> {
+class _AddCustomerScreenState extends State<AddCustomerScreen> {
   final name = TextEditingController();
   final phone = TextEditingController();
   final address = TextEditingController();
   bool loading = false;
-  bool initialLoading = false; // if we ever need to fetch from Firestore
 
   @override
   void initState() {
     super.initState();
-
-    // If supplierData is passed (from list/detail), use it to prefill.
-    if (widget.supplierData != null) {
-      name.text = widget.supplierData!["name"]?.toString() ?? "";
-      phone.text = widget.supplierData!["phone"]?.toString() ?? "";
-      address.text = widget.supplierData!["address"]?.toString() ?? "";
-    } else if (widget.supplierId != null) {
-      // Optional: load from Firestore if only ID was passed
-      _loadSupplierFromFirestore();
+    if (widget.customerData != null) {
+      name.text = widget.customerData!['name']?.toString() ?? '';
+      phone.text = widget.customerData!['phone']?.toString() ?? '';
+      address.text = widget.customerData!['address']?.toString() ?? '';
     }
   }
 
-  Future<void> _loadSupplierFromFirestore() async {
-    setState(() => initialLoading = true);
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection("suppliers")
-          .doc(widget.supplierId)
-          .get();
-
-      final data = doc.data();
-      if (data != null) {
-        name.text = data["name"]?.toString() ?? "";
-        phone.text = data["phone"]?.toString() ?? "";
-        address.text = data["address"]?.toString() ?? "";
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error loading supplier: $e")),
-      );
-    } finally {
-      if (mounted) setState(() => initialLoading = false);
-    }
-  }
-
-  Future<void> saveSupplier() async {
+  Future<void> saveCustomer() async {
     if (name.text.trim().isEmpty || phone.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Name and phone are required")),
@@ -81,26 +51,24 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
       };
 
       if (widget.isEdit) {
-        // 🔹 UPDATE existing supplier
         await FirebaseFirestore.instance
-            .collection("suppliers")
-            .doc(widget.supplierId)
+            .collection("customers")
+            .doc(widget.customerId)
             .update(data);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Supplier updated")),
+          const SnackBar(content: Text("Customer updated")),
         );
       } else {
-        // 🔹 ADD new supplier
-        await FirebaseFirestore.instance.collection("suppliers").add({
+        await FirebaseFirestore.instance.collection("customers").add({
           ...data,
           "createdAt": DateTime.now(),
         });
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Supplier saved")),
+          const SnackBar(content: Text("Customer saved")),
         );
       }
 
@@ -125,8 +93,8 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEdit ? "Edit Supplier" : "Add Supplier";
-    final buttonText = widget.isEdit ? "Update Supplier" : "Save Supplier";
+    final title = widget.isEdit ? "Edit Customer" : "Add Customer";
+    final btnText = widget.isEdit ? "Update Customer" : "Save Customer";
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
@@ -143,27 +111,20 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: initialLoading
-                    ? const SizedBox(
-                  height: 120,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-                    : Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      "Supplier Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      "Customer Details",
+                      style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: name,
                       decoration: InputDecoration(
-                        labelText: "Supplier Name",
-                        prefixIcon: const Icon(Icons.store),
+                        labelText: "Customer Name",
+                        prefixIcon: const Icon(Icons.person),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -197,26 +158,15 @@ class _AddSupplierScreenState extends State<AddSupplierScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: loading ? null : saveSupplier,
+                        onPressed: loading ? null : saveCustomer,
                         icon: loading
                             ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                             : const Icon(Icons.save),
-                        label: Text(
-                          loading ? "Saving..." : buttonText,
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        label: Text(loading ? "Saving..." : btnText),
                       ),
                     )
                   ],

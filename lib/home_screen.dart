@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:talhaclothhouse/products/all_products_screen.dart';
+import 'customers/customer_list_screen.dart';
 import 'suppliers/supplier_list_screen.dart';
 import 'suppliers/all_suppliers_balance_screen.dart';
+import 'suppliers/pay_slips_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -61,7 +64,12 @@ class Sidebar extends StatelessWidget {
           ),
 
           // For now sidebar items are static; you can wire navigation later
-          menuItem(Icons.people, "Customers", () {}),
+          menuItem(Icons.people, "Customers", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CustomerListScreen()),
+            );
+          }),
           menuItem(Icons.store, "Suppliers", () {
             Navigator.push(
               context,
@@ -70,6 +78,14 @@ class Sidebar extends StatelessWidget {
           }),
           menuItem(Icons.shopping_cart, "Sales", () {}),
           menuItem(Icons.inventory, "Inventory", () {}),
+          menuItem(Icons.production_quantity_limits, "Purchases", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AllProductsScreen(),
+              ),
+            );
+          }),
           menuItem(Icons.shopping_bag, "Purchases", () {}),
           menuItem(Icons.payments, "All Suppliers Payments", () {
             Navigator.push(
@@ -156,6 +172,7 @@ class DashboardContent extends StatelessWidget {
       ["Sales", Icons.shopping_cart],
       ["Inventory", Icons.inventory],
       ["All Suppliers Payments", Icons.payments],
+      ["Pay Slips", Icons.receipt_long],
     ];
 
     return GridView.builder(
@@ -171,35 +188,40 @@ class DashboardContent extends StatelessWidget {
         return DashboardCard(
           title: data[index][0] as String,
           icon: data[index][1] as IconData,
-          onTap: () {
-            switch (data[index][0]) {
-              case 'Suppliers':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SupplierListScreen(),
-                  ),
-                );
-                break;
-              case 'All Suppliers Payments':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AllSuppliersBalanceScreen(),
-                  ),
-                );
-                break;
-            // You can add more cases later for Customers, Sales, etc.
-              default:
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      '${data[index][0]} screen coming soon!',
+            onTap: () {
+              switch (data[index][0]) {
+                case 'Suppliers':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SupplierListScreen(),
                     ),
-                  ),
-                );
+                  );
+                  break;
+                case 'All Suppliers Payments':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AllSuppliersBalanceScreen(),
+                    ),
+                  );
+                  break;
+                case 'Pay Slips':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PaySlipsScreen(),
+                    ),
+                  );
+                  break;
+                default:
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${data[index][0]} screen coming soon!'),
+                    ),
+                  );
+              }
             }
-          },
         );
       },
     );

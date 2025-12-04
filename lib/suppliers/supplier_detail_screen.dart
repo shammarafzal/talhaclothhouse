@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:talhaclothhouse/suppliers/view_invoice_screen.dart';
 
 import 'supplier_invoices_summary_screen.dart';
+import 'add_supplier_screen.dart';
 
 import 'add_supplier_product_screen.dart';
 import 'create_invoice_screen.dart';
@@ -23,6 +24,24 @@ class SupplierDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(supplierData["name"] ?? "Supplier"),
         actions: [
+          // 🔹 EDIT ICON
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: "Edit Supplier",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddSupplierScreen(
+                    supplierId: supplierId,
+                    supplierData: supplierData,
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // existing New Purchase Invoice icon
           IconButton(
             icon: const Icon(Icons.receipt_long),
             tooltip: "New Purchase Invoice",
@@ -40,6 +59,7 @@ class SupplierDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: Container(
         color: Colors.grey.shade100,
         child: SingleChildScrollView(
@@ -165,17 +185,35 @@ class SupplierDetailScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: products.length,
-                  itemBuilder: (_, index) {
-                    final p =
-                    products[index].data() as Map<String, dynamic>;
+                  itemBuilder: (contextList, index) {
+                    final doc = products[index];
+                    final p = doc.data() as Map<String, dynamic>;
+
                     return ListTile(
                       dense: true,
                       leading: const Icon(Icons.inventory_2_outlined),
                       title: Text(p["name"] ?? ""),
                       subtitle: Text("Rate: ${p["rate"] ?? 0}"),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        tooltip: "Edit Product",
+                        onPressed: () {
+                          Navigator.push(
+                            contextList,
+                            MaterialPageRoute(
+                              builder: (_) => AddSupplierProductScreen(
+                                supplierId: supplierId,
+                                productId: doc.id,
+                                productData: p,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 );
+
               },
             ),
           ],
