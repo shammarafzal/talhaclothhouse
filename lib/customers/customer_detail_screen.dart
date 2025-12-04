@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:talhaclothhouse/customers/view_customer_invoice_screen.dart';
+
 import 'CreateCustomerReceiptScreen.dart';
 import 'add_customer_screen.dart';
 
@@ -39,7 +41,7 @@ class CustomerDetailScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.receipt_long),
-            tooltip: "New Sale / Receipt",
+            tooltip: "New Sales Invoice",
             onPressed: () {
               Navigator.push(
                 context,
@@ -181,14 +183,14 @@ class CustomerDetailScreen extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 8),
                 const Text(
-                  "All Receipts / Bills",
+                  "All Sales Invoices",
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 if (docs.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: Text("No receipts yet."),
+                    child: Text("No invoices yet."),
                   )
                 else
                   ListView.builder(
@@ -198,8 +200,9 @@ class CustomerDetailScreen extends StatelessWidget {
                     itemBuilder: (contextList, index) {
                       final doc = docs[index];
                       final m = doc.data();
-                      final receiptNo = m['receiptNumber'] ?? '';
-                      final date = m['date'] ?? '';
+                      // 🔧 use invoiceNumber (what we save from CreateCustomerReceiptScreen)
+                      final invoiceNo = (m['invoiceNumber'] ?? '').toString();
+                      final date = (m['date'] ?? '').toString();
                       final total = (m['totalAmount'] ?? 0).toDouble();
                       final paid = (m['amountPaid'] ?? 0).toDouble();
                       final status =
@@ -222,9 +225,13 @@ class CustomerDetailScreen extends StatelessWidget {
                         child: ListTile(
                           leading: const Icon(Icons.receipt_long),
                           title: Text(
-                              "Receipt #${receiptNo.toString().isEmpty ? '-' : receiptNo}"),
+                            invoiceNo.isEmpty
+                                ? "Invoice"
+                                : "Invoice #$invoiceNo",
+                          ),
                           subtitle: Text(
-                              "$date • Total: ${total.toStringAsFixed(0)} • Paid: ${paid.toStringAsFixed(0)}"),
+                            "$date • Total: ${total.toStringAsFixed(0)} • Paid: ${paid.toStringAsFixed(0)}",
+                          ),
                           trailing: Chip(
                             label: Text(
                               status,
@@ -237,7 +244,15 @@ class CustomerDetailScreen extends StatelessWidget {
                             ),
                           ),
                           onTap: () {
-                            // You can create a ViewCustomerReceiptScreen similar to ViewInvoiceScreen
+                            Navigator.push(
+                              contextList,
+                              MaterialPageRoute(
+                                builder: (_) => ViewCustomerInvoiceScreen(
+                                  customerId: customerId,
+                                  saleId: doc.id,
+                                ),
+                              ),
+                            );
                           },
                         ),
                       );

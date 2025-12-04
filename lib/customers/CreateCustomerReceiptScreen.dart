@@ -95,9 +95,12 @@ class _CreateInvoiceScreenState extends State<CreateCustomerReceiptScreen> {
   }
 
   /// Generate invoice number like TCH-01, TCH-02 using Firestore counter
+  /// Generate customer invoice number like TCH-CUS-01, TCH-CUS-02...
   Future<String> _generateInvoiceNumber() async {
-    final counterRef =
-    FirebaseFirestore.instance.collection('counters').doc('purchaseInvoice');
+    // separate counter document for customer invoices
+    final counterRef = FirebaseFirestore.instance
+        .collection('counters')
+        .doc('customerInvoice');
 
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       final snap = await transaction.get(counterRef);
@@ -109,13 +112,13 @@ class _CreateInvoiceScreenState extends State<CreateCustomerReceiptScreen> {
       }
 
       final nextNumber = lastNumber + 1;
-
       transaction.set(counterRef, {'lastNumber': nextNumber});
 
       final padded = nextNumber.toString().padLeft(2, '0');
-      return 'TCH-$padded';
+      return 'TCH-CUS-$padded';
     });
   }
+
 
   @override
   void initState() {

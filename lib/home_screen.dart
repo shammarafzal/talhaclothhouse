@@ -78,7 +78,7 @@ class Sidebar extends StatelessWidget {
           }),
           menuItem(Icons.shopping_cart, "Sales", () {}),
           menuItem(Icons.inventory, "Inventory", () {}),
-          menuItem(Icons.production_quantity_limits, "Purchases", () {
+          menuItem(Icons.production_quantity_limits, "Products", () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -86,7 +86,7 @@ class Sidebar extends StatelessWidget {
               ),
             );
           }),
-          menuItem(Icons.shopping_bag, "Purchases", () {}),
+          // menuItem(Icons.shopping_bag, "Purchases", () {}),
           menuItem(Icons.payments, "All Suppliers Payments", () {
             Navigator.push(
               context,
@@ -95,7 +95,7 @@ class Sidebar extends StatelessWidget {
               ),
             );
           }),
-          menuItem(Icons.settings, "Settings", () {}),
+          // menuItem(Icons.settings, "Settings", () {}),
         ],
       ),
     );
