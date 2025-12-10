@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'talhaclothhouse.firebaseapp.com',
     storageBucket: 'talhaclothhouse.firebasestorage.app',
   );
+
 }
