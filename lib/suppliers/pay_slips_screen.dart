@@ -18,12 +18,12 @@ class PaySlipsScreen extends StatelessWidget {
             icon: const Icon(Icons.add),
             tooltip: "Create Pay Slip",
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const CreatePaySlipScreen(),
-                ),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => const CreatePaySlipScreen(),
+              //   ),
+              // );
             },
           ),
           IconButton(
@@ -131,12 +131,12 @@ class PaySlipsScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const CreatePaySlipScreen(),
-            ),
-          );
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (_) => const CreatePaySlipScreen(),
+          //   ),
+          // );
         },
         icon: const Icon(Icons.add),
         label: const Text("Create Pay Slip"),

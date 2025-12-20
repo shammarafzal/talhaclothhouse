@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../inventory/inventory_service.dart';
+
 
 class AddSupplierProductScreen extends StatefulWidget {
   final String supplierId;
@@ -155,11 +157,18 @@ class _AddSupplierProductScreenState extends State<AddSupplierProductScreen> {
           "createdAt": DateTime.now(),
         });
 
+        /// ✅ CREATE INVENTORY ENTRY (ONLY ONCE)
+        await InventoryService.createInventoryIfNotExists(
+          productId: productId,
+          productName: productData['name'].toString(),
+        );
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Product saved")),
         );
       }
+
 
       Navigator.pop(context);
     } catch (e) {

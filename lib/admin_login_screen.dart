@@ -18,7 +18,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool _showPassword = false;
 
   // 🔐 Hardcoded admin email (must exist in Firebase Auth)
-  static const String _adminEmail = 'a@admin.com';
+  static const String _adminEmail = 'ammarafzal075@gmail.com';
 
   @override
   void dispose() {

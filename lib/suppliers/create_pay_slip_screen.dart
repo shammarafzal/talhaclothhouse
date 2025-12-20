@@ -6,7 +6,14 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 class CreatePaySlipScreen extends StatefulWidget {
-  const CreatePaySlipScreen({super.key});
+  final String? supplierId;
+  final Map<String, dynamic>? supplierData;
+
+  const CreatePaySlipScreen({
+    super.key,
+    required this.supplierId,
+    required this.supplierData,
+  });
 
   @override
   State<CreatePaySlipScreen> createState() => _CreatePaySlipScreenState();
@@ -18,9 +25,11 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
 
   final amountController = TextEditingController();
   final noteController = TextEditingController();
+  final payDateController = TextEditingController();
+
+  DateTime? _selectedPayDate;
   bool saving = false;
 
-  // Issuer fixed details (you can change later)
   final String issuerName = "Talha Afzal Cloth House";
   final String issuerPhone =
       "Talha Afzal: 0303-6339313, Waqas Afzal: 0300-6766691, Abbas Afzal: 0303-2312531";
@@ -28,16 +37,23 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
       "Shop No 21, Nasir Cloth Market, Chungi No 11, Multan";
 
   @override
+  void initState() {
+    super.initState();
+    _selectedPayDate = DateTime.now();
+    payDateController.text = DateFormat('dd/MM/yyyy').format(_selectedPayDate!);
+  }
+
+  @override
   void dispose() {
     amountController.dispose();
     noteController.dispose();
+    payDateController.dispose();
     super.dispose();
   }
 
   Future<String> _generateSlipSerial() async {
-    final counterRef = FirebaseFirestore.instance
-        .collection('counters')
-        .doc('paySlip');
+    final counterRef =
+    FirebaseFirestore.instance.collection('counters').doc('paySlip');
 
     return FirebaseFirestore.instance.runTransaction((tx) async {
       final snap = await tx.get(counterRef);
@@ -53,69 +69,85 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
     });
   }
 
+  Future<void> _pickPayDate() async {
+    final now = DateTime.now();
+    final initial = _selectedPayDate ?? now;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedPayDate = picked;
+        payDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
   Future<void> _printSlip(Map<String, dynamic> slipData) async {
+
+
     final pdf = pw.Document();
-
-    final serial = (slipData['serialNumber'] ?? '').toString();
+    final amountInWords = amountToWordsPKR((slipData['amount'] ?? 0).toDouble());
+    final serial = slipData['serialNumber'] ?? '';
     final amount = (slipData['amount'] ?? 0).toDouble();
-    final status = (slipData['status'] ?? 'Unpaid').toString();
-    final date = (slipData['date'] ?? '').toString();
-    final time = (slipData['time'] ?? '').toString();
-    final dayName = (slipData['dayName'] ?? '').toString();
-    final supplierName = (slipData['supplierName'] ?? '').toString();
-    final supplierPhone = (slipData['supplierPhone'] ?? '').toString();
-    final supplierAddress = (slipData['supplierAddress'] ?? '').toString();
-    final issuerName = (slipData['issuerName'] ?? '').toString();
-    final issuerPhone = (slipData['issuerPhone'] ?? '').toString();
-    final issuerAddress = (slipData['issuerAddress'] ?? '').toString();
-    final note = (slipData['note'] ?? '').toString();
-    final qrData = (slipData['qrData'] ?? '').toString();
+    final status = slipData['status'] ?? 'Unpaid';
+    final payDate = slipData['payDate'] ?? '';
+    final payDay = slipData['payDayName'] ?? '';
+    final slipDate = slipData['slipDate'] ?? '';
+    final slipDay = slipData['slipDayName'] ?? '';
+    final time = slipData['time'] ?? '';
+    final supplierName = slipData['supplierName'] ?? '';
+    final supplierPhone = slipData['supplierPhone'] ?? '';
+    final supplierAddress = slipData['supplierAddress'] ?? '';
+    final issuerName = slipData['issuerName'] ?? '';
+    final issuerPhone = slipData['issuerPhone'] ?? '';
+    final issuerAddress = slipData['issuerAddress'] ?? '';
+    final note = slipData['note'] ?? '';
+    final qrData = slipData['qrData'] ?? '';
+    final cashedBy = slipData['cashedBy'] ?? '';
 
-    final statusColor = status == 'Paid'
-        ? PdfColors.green
-        : PdfColors.red;
+    final statusColor = status == 'Paid' ? PdfColors.green : PdfColors.red;
+    final small = pw.TextStyle(fontSize: 9);
+    final bold = pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold);
 
     pdf.addPage(
       pw.Page(
-        // A6 size: 105 x 148 mm
-        pageFormat:
-        PdfPageFormat(105 * PdfPageFormat.mm, 148 * PdfPageFormat.mm),
-        margin: const pw.EdgeInsets.all(8),
+        pageFormat: PdfPageFormat.a5,
+        margin: const pw.EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
         build: (context) {
           return pw.Container(
-            padding: const pw.EdgeInsets.all(6),
+            padding: const pw.EdgeInsets.all(8),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              mainAxisSize: pw.MainAxisSize.min,
               children: [
                 pw.Text(
                   "PAY SLIP",
                   textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+                  style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
                 ),
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
 
-                // Date / status
+                // 🔹 Dates (Slip Date + Pay Date)
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text("Date: $date",
-                            style: const pw.TextStyle(fontSize: 9)),
-                        pw.Text("Time: $time",
-                            style: const pw.TextStyle(fontSize: 9)),
-                        pw.Text("Day: $dayName",
-                            style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text("Slip Date: $slipDate ($slipDay)", style: small),
+                        pw.Text("Pay Date: $payDate ($payDay)", style: small),
+                        pw.Text("Time: $time", style: small),
+                        pw.Text("Slip No: $serial", style: small),
                       ],
                     ),
                     pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 2),
+                      padding:
+                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: pw.BoxDecoration(
                         color: PdfColors.grey200,
                         borderRadius: pw.BorderRadius.circular(4),
@@ -123,122 +155,117 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       child: pw.Text(
                         status,
                         style: pw.TextStyle(
-                          color: statusColor,
-                          fontSize: 8,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
+                            color: statusColor,
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
                 pw.Divider(),
 
                 // Supplier
-                pw.Text(
-                  "Supplier",
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Text(supplierName,
-                    style: const pw.TextStyle(fontSize: 9)),
-                if (supplierPhone.isNotEmpty)
-                  pw.Text(supplierPhone,
-                      style: const pw.TextStyle(fontSize: 8)),
-                if (supplierAddress.isNotEmpty)
-                  pw.Text(supplierAddress,
-                      style: const pw.TextStyle(fontSize: 8)),
+                pw.Text("Supplier", style: bold),
+                pw.Text(supplierName, style: small),
+                if (supplierPhone.toString().isNotEmpty)
+                  pw.Text(supplierPhone, style: small),
+                if (supplierAddress.toString().isNotEmpty)
+                  pw.Text(supplierAddress, style: small),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
                 pw.Divider(),
 
                 // Issuer
-                pw.Text(
-                  "Issuer",
-                  style: pw.TextStyle(
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Text(issuerName,
-                    style: const pw.TextStyle(fontSize: 9)),
-                pw.Text(issuerPhone,
-                    style: const pw.TextStyle(fontSize: 8)),
-                pw.Text(issuerAddress,
-                    style: const pw.TextStyle(fontSize: 8)),
+                pw.Text("Issuer", style: bold),
+                pw.Text(issuerName, style: small),
+                pw.Text(issuerPhone, style: small),
+                pw.Text(issuerAddress, style: small),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
                 pw.Divider(),
 
-                // Amount
+                // Amount + Note
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
+                    pw.Text("Amount:", style: bold),
+                    pw.Text("${amount.toStringAsFixed(2)} PKR",
+                        style: pw.TextStyle(
+                            fontSize: 11, fontWeight: pw.FontWeight.bold)),
                     pw.Text(
-                      "Amount:",
-                      style: pw.TextStyle(
-                        fontSize: 9,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
+                      "Amount in Words:",
+                      style: bold,
                     ),
                     pw.Text(
-                      "${amount.toStringAsFixed(2)} PKR",
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
+                      amountInWords,
+                      style: small,
                     ),
                   ],
                 ),
-                if (note.isNotEmpty)
-                  pw.Text("Note: $note",
-                      style: const pw.TextStyle(fontSize: 8)),
+                if (note.toString().isNotEmpty)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 2),
+                    child: pw.Text("Note: $note", style: small),
+                  ),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
+
+                // ✅ Cash Date + Cashed By block
+                pw.Container(
+                  padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: pw.BoxDecoration(
+                    borderRadius: pw.BorderRadius.circular(4),
+                    border:
+                    pw.Border.all(color: PdfColors.grey300, width: 0.5),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text("Pay Date: $payDate", style: small),
+                          pw.Text("Cash Date: ____________", style: small),
+                        ],
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        "Cashed By: ${cashedBy.toString().isNotEmpty ? cashedBy : "______________________"}",
+                        style: small,
+                      ),
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 8),
                 pw.Divider(),
 
-                // QR + serial
-                if (qrData.isNotEmpty)
+                if (qrData.toString().isNotEmpty)
                   pw.Center(
                     child: pw.Column(
                       children: [
-                        pw.Text(
-                          "Scan to Verify",
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
+                        pw.Text("Scan to Verify", style: bold),
+                        pw.SizedBox(height: 3),
                         pw.BarcodeWidget(
                           barcode: pw.Barcode.qrCode(),
                           data: qrData,
-                          width: 60,
-                          height: 60,
+                          width: 70,
+                          height: 70,
                         ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          serial,
-                          style: pw.TextStyle(
-                            fontSize: 9,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
+                        pw.SizedBox(height: 3),
+                        pw.Text(serial, style: bold),
                       ],
                     ),
                   ),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 6),
                 pw.Text(
                   "Talha Afzal Cloth House - System Generated Slip",
                   textAlign: pw.TextAlign.center,
-                  style: const pw.TextStyle(
-                    fontSize: 7,
-                    color: PdfColors.grey,
-                  ),
+                  style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
                 ),
               ],
             ),
@@ -247,24 +274,118 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
       ),
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+  String amountToWordsPKR(num amount) {
+    if (amount == 0) return "Zero Rupees Only";
+
+    final units = [
+      "",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen"
+    ];
+
+    final tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety"
+    ];
+
+    String convertBelowThousand(int n) {
+      String result = "";
+      if (n >= 100) {
+        result += "${units[n ~/ 100]} Hundred ";
+        n %= 100;
+      }
+      if (n >= 20) {
+        result += "${tens[n ~/ 10]} ";
+        n %= 10;
+      }
+      if (n > 0) {
+        result += "${units[n]} ";
+      }
+      return result.trim();
+    }
+
+    int rupees = amount.floor();
+    int paisa = ((amount - rupees) * 100).round();
+
+    String words = "";
+
+    if (rupees >= 10000000) {
+      words +=
+      "${convertBelowThousand(rupees ~/ 10000000)} Crore ";
+      rupees %= 10000000;
+    }
+
+    if (rupees >= 100000) {
+      words +=
+      "${convertBelowThousand(rupees ~/ 100000)} Lac ";
+      rupees %= 100000;
+    }
+
+    if (rupees >= 1000) {
+      words +=
+      "${convertBelowThousand(rupees ~/ 1000)} Thousand ";
+      rupees %= 1000;
+    }
+
+    if (rupees > 0) {
+      words += convertBelowThousand(rupees);
+    }
+
+    words = words.trim() + " Rupees";
+
+    if (paisa > 0) {
+      words +=
+      " and ${convertBelowThousand(paisa)} Paisa";
+    }
+
+    return "$words Only";
   }
 
+
   Future<void> _saveSlip() async {
-    if (selectedSupplierId == null || selectedSupplierData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a supplier")),
-      );
+    // if (selectedSupplierId == null || selectedSupplierData == null) {
+    //   ScaffoldMessenger.of(context)
+    //       .showSnackBar(const SnackBar(content: Text("Please select a supplier")));
+    //   return;
+    // }
+
+    if (_selectedPayDate == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Please select a Pay Date")));
       return;
     }
 
     final amount = double.tryParse(amountController.text.trim()) ?? 0;
     if (amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter a valid amount")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
       return;
     }
 
@@ -272,58 +393,59 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
 
     try {
       final now = DateTime.now();
-      final date = DateFormat('dd/MM/yyyy').format(now);
-      final time = DateFormat('hh:mm a').format(now);
-      final dayName = DateFormat('EEEE').format(now);
+      final payDate = _selectedPayDate!;
+      final slipDateStr = DateFormat('dd/MM/yyyy').format(now);
+      final payDateStr = DateFormat('dd/MM/yyyy').format(payDate);
+      final slipDayName = DateFormat('EEEE').format(now);
+      final payDayName = DateFormat('EEEE').format(payDate);
+      final timeStr = DateFormat('hh:mm a').format(now);
 
       final serialNumber = await _generateSlipSerial();
 
       final slipRef = FirebaseFirestore.instance
           .collection("suppliers")
-          .doc(selectedSupplierId)
+          .doc(widget.supplierId)
           .collection("paySlips")
           .doc();
 
       final slipData = {
         'serialNumber': serialNumber,
         'slipId': slipRef.id,
-        'supplierId': selectedSupplierId,
-        'supplierName': selectedSupplierData!['name'] ?? '',
-        'supplierPhone': selectedSupplierData!['phone'] ?? '',
-        'supplierAddress': selectedSupplierData!['address'] ?? '',
+        'supplierId': widget.supplierId,
+        'supplierName': widget.supplierData?['name'] ?? '',
+        'supplierPhone': widget.supplierData?['phone'] ?? '',
+        'supplierAddress': widget.supplierData?['address'] ?? '',
         'issuerName': issuerName,
         'issuerPhone': issuerPhone,
         'issuerAddress': issuerAddress,
         'amount': amount,
-        'status': 'Unpaid', // default
+        'status': 'Unpaid',
         'note': noteController.text.trim().isEmpty
             ? null
             : noteController.text.trim(),
-        'date': date,
-        'time': time,
-        'dayName': dayName,
+        'payDate': payDateStr,
+        'payDayName': payDayName,
+        'slipDate': slipDateStr,
+        'slipDayName': slipDayName,
+        'time': timeStr,
         'createdAt': now,
         'paidAt': null,
-        // QR content – app can scan & verify
+        'cashDate': null,
+        'cashedBy': null,
         'qrData': 'PAYSLIP|$selectedSupplierId|${slipRef.id}',
       };
 
-      // Save in Firestore
       await slipRef.set(slipData);
-
-      // 🔹 Print immediately after save
       await _printSlip(slipData);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pay slip saved & sent to printer")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Pay slip saved & printed")));
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving pay slip: $e")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -342,76 +464,38 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
             child: Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+                  borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "Pay Slip Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const Text("Pay Slip Details",
+                        style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 16),
 
-                    // Supplier dropdown
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: FirebaseFirestore.instance
-                          .collection("suppliers")
-                          .orderBy("name")
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          return Text("Error: ${snapshot.error}");
-                        }
-                        if (!snapshot.hasData) {
-                          return const LinearProgressIndicator();
-                        }
 
-                        final docs = snapshot.data!.docs;
-                        if (docs.isEmpty) {
-                          return const Text(
-                            "No suppliers found. Please add supplier first.",
-                          );
-                        }
+                    const SizedBox(height: 12),
 
-                        return DropdownButtonFormField<String>(
-                          value: selectedSupplierId,
-                          decoration: const InputDecoration(
-                            labelText: "Supplier",
-                            border: OutlineInputBorder(),
-                          ),
-                          items: docs.map((d) {
-                            final data = d.data();
-                            final name =
-                            (data['name'] ?? 'Supplier').toString();
-                            return DropdownMenuItem<String>(
-                              value: d.id,
-                              child: Text(name),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val == null) return;
-                            final doc = docs.firstWhere((d) => d.id == val);
-                            setState(() {
-                              selectedSupplierId = val;
-                              selectedSupplierData = doc.data();
-                            });
-                          },
-                        );
-                      },
+                    // Pay Date selector
+                    TextField(
+                      controller: payDateController,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: "Pay Date",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.date_range),
+                      ),
+                      onTap: _pickPayDate,
                     ),
 
                     const SizedBox(height: 12),
 
                     TextField(
                       controller: amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
                         labelText: "Amount",
                         border: OutlineInputBorder(),
@@ -431,30 +515,6 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
-
-                    // Issuer info (read-only)
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.blue.shade50,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Issuer (fixed)",
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(issuerName),
-                          Text(issuerPhone),
-                          Text(issuerAddress),
-                        ],
-                      ),
-                    ),
-
                     const SizedBox(height: 20),
 
                     SizedBox(
@@ -465,16 +525,14 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                             ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child:
+                          CircularProgressIndicator(strokeWidth: 2),
                         )
                             : const Icon(Icons.print),
                         label: Text(
-                          saving ? "Saving & Printing..." : "Save & Print",
-                        ),
+                            saving ? "Saving & Printing..." : "Save & Print"),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),

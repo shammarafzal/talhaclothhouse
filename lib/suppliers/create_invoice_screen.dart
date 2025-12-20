@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import '../inventory/inventory_service.dart';
+
 
 class _InvoiceItem {
   final TextEditingController qtyController = TextEditingController();
@@ -221,6 +223,18 @@ class _CreateInvoiceScreenState extends State<CreateInvoiceScreen> {
           .doc(widget.supplierId)
           .collection('purchases')
           .add(data);
+// 🔥 UPDATE INVENTORY (ADD STOCK)
+      for (final item in validItems) {
+        final productId = item['productId'] as String?;
+        final qty = item['qty'];
+
+        if (productId == null) continue;
+
+        await InventoryService.increaseStock(
+          productId: productId,
+          qty: (qty is int) ? qty : (qty as num).toInt(),
+        );
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

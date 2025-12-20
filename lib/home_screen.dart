@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:talhaclothhouse/customers/create_sales_invoice_screen.dart';
 import 'package:talhaclothhouse/products/all_products_screen.dart';
 import 'customers/customer_list_screen.dart';
+import 'inventory/inventory_view.dart';
 import 'suppliers/supplier_list_screen.dart';
 import 'suppliers/all_suppliers_balance_screen.dart';
 import 'suppliers/pay_slips_screen.dart';
@@ -76,8 +78,20 @@ class Sidebar extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const SupplierListScreen()),
             );
           }),
-          menuItem(Icons.shopping_cart, "Sales", () {}),
-          menuItem(Icons.inventory, "Inventory", () {}),
+          menuItem(Icons.shopping_cart, "Sales", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CreateCustomerInvoiceScreen()),
+            );
+          }),
+          menuItem(Icons.inventory, "Inventory", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const InventoryScreen(),
+              ),
+            );
+          }),
           menuItem(Icons.production_quantity_limits, "Products", () {
             Navigator.push(
               context,

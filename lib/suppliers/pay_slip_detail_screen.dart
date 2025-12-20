@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class PaySlipDetailScreen extends StatelessWidget {
@@ -12,27 +13,89 @@ class PaySlipDetailScreen extends StatelessWidget {
     required this.slipId,
   });
 
-  Future<void> _updateStatus(BuildContext context, String newStatus) async {
+  /// 🔹 Ask who cashed & cash date, then mark as paid
+  Future<void> _markAsPaid(BuildContext context) async {
+    final cashedByCtrl = TextEditingController();
+    DateTime cashDate = DateTime.now();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Mark Slip as Paid"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: cashedByCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Cashed By",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: cashDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    cashDate = picked;
+                  }
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: "Cash Date",
+                    border: OutlineInputBorder(),
+                  ),
+                  child: Text(
+                    DateFormat('dd/MM/yyyy').format(cashDate),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (cashedByCtrl.text.trim().isEmpty) return;
+                Navigator.pop(ctx, true);
+              },
+              child: const Text("Confirm"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
     try {
-      final ref = FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection("suppliers")
           .doc(supplierId)
           .collection("paySlips")
-          .doc(slipId);
-
-      final updateData = {
-        'status': newStatus,
-        'paidAt': newStatus == 'Paid' ? DateTime.now() : null,
-      };
-
-      await ref.update(updateData);
+          .doc(slipId)
+          .update({
+        'status': 'Paid',
+        'paidAt': DateTime.now(),
+        'cashDate': DateFormat('dd/MM/yyyy').format(cashDate),
+        'cashedBy': cashedByCtrl.text.trim(),
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Status updated to $newStatus")),
+        const SnackBar(content: Text("Slip marked as Paid")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating status: $e")),
+        SnackBar(content: Text("Error: $e")),
       );
     }
   }
@@ -47,229 +110,157 @@ class PaySlipDetailScreen extends StatelessWidget {
           .doc(slipId)
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: Center(child: Text("Error: ${snapshot.error}")),
-          );
-        }
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return Scaffold(
-            appBar: AppBar(),
+        if (!snapshot.hasData) {
+          return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final data = snapshot.data!.data()!;
-        final serial = (data['serialNumber'] ?? '').toString();
-        final amount = (data['amount'] ?? 0).toDouble();
-        final status = (data['status'] ?? 'Unpaid').toString();
-        final date = (data['date'] ?? '').toString();
-        final time = (data['time'] ?? '').toString();
-        final dayName = (data['dayName'] ?? '').toString();
-        final supplierName = (data['supplierName'] ?? '').toString();
-        final supplierPhone = (data['supplierPhone'] ?? '').toString();
-        final supplierAddress = (data['supplierAddress'] ?? '').toString();
-        final issuerName = (data['issuerName'] ?? '').toString();
-        final issuerPhone = (data['issuerPhone'] ?? '').toString();
-        final issuerAddress = (data['issuerAddress'] ?? '').toString();
-        final note = (data['note'] ?? '').toString();
-        final qrData = (data['qrData'] ?? '').toString();
-
+        final d = snapshot.data!.data()!;
+        final status = d['status'] ?? 'Unpaid';
         final statusColor = status == 'Paid' ? Colors.green : Colors.red;
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(serial.isEmpty ? "Pay Slip" : serial),
+            title: Text(d['serialNumber'] ?? 'Pay Slip'),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.done),
-                tooltip: "Mark as Paid",
-                onPressed: status == 'Paid'
-                    ? null
-                    : () => _updateStatus(context, 'Paid'),
-              ),
-              IconButton(
-                icon: const Icon(Icons.undo),
-                tooltip: "Mark as Unpaid",
-                onPressed: status == 'Unpaid'
-                    ? null
-                    : () => _updateStatus(context, 'Unpaid'),
-              ),
+              if (status != 'Paid')
+                IconButton(
+                  icon: const Icon(Icons.done),
+                  tooltip: "Mark as Paid",
+                  onPressed: () => _markAsPaid(context),
+                ),
             ],
           ),
           body: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               child: ConstrainedBox(
-                // 👇 roughly A6 width for a small slip
-                constraints: const BoxConstraints(maxWidth: 400),
+                constraints: const BoxConstraints(maxWidth: 450),
                 child: Card(
-                  elevation: 2,
+                  elevation: 3,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                   child: Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Header
-                        Text(
+                        const Text(
                           "PAY SLIP",
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
 
-                        // Date / Time / Status
+                        /// Dates + Status
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Date: $date",
-                                    style: const TextStyle(fontSize: 11)),
-                                Text("Time: $time",
-                                    style: const TextStyle(fontSize: 11)),
-                                Text("Day: $dayName",
-                                    style: const TextStyle(fontSize: 11)),
+                                Text("Slip Date: ${d['slipDate']} (${d['slipDayName']})"),
+                                Text("Pay Date: ${d['payDate']} (${d['payDayName']})"),
+                                Text("Time: ${d['time']}"),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                status,
-                                style: TextStyle(
+                            Chip(
+                              label: Text(status),
+                              backgroundColor: statusColor.withOpacity(0.1),
+                              labelStyle: TextStyle(
                                   color: statusColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                  fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: 8),
-                        Divider(color: Colors.grey.shade300, height: 16),
+                        const Divider(height: 24),
 
-                        // Supplier
-                        const Text(
-                          "Supplier",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(supplierName,
-                            style: const TextStyle(fontSize: 11)),
-                        if (supplierPhone.isNotEmpty)
-                          Text(supplierPhone,
-                              style: const TextStyle(fontSize: 11)),
-                        if (supplierAddress.isNotEmpty)
-                          Text(supplierAddress,
-                              style: const TextStyle(fontSize: 11)),
+                        /// Supplier
+                        const Text("Supplier", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(d['supplierName'] ?? ''),
+                        if ((d['supplierPhone'] ?? '').toString().isNotEmpty)
+                          Text(d['supplierPhone']),
+                        if ((d['supplierAddress'] ?? '').toString().isNotEmpty)
+                          Text(d['supplierAddress']),
 
-                        const SizedBox(height: 6),
-                        Divider(color: Colors.grey.shade300, height: 16),
+                        const Divider(height: 24),
 
-                        // Issuer
-                        const Text(
-                          "Issuer",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(issuerName,
-                            style: const TextStyle(fontSize: 11)),
-                        Text(issuerPhone,
-                            style: const TextStyle(fontSize: 11)),
-                        Text(issuerAddress,
-                            style: const TextStyle(fontSize: 11)),
+                        /// Issuer
+                        const Text("Issuer", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(d['issuerName']),
+                        Text(d['issuerPhone']),
+                        Text(d['issuerAddress']),
 
-                        const SizedBox(height: 6),
-                        Divider(color: Colors.grey.shade300, height: 16),
+                        const Divider(height: 24),
 
-                        // Amount
+                        /// Amount
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              "Amount:",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
-                            ),
+                            const Text("Amount:",
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             Text(
-                              "${amount.toStringAsFixed(2)} PKR",
+                              "${(d['amount'] ?? 0).toStringAsFixed(2)} PKR",
                               style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
+                                  fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                           ],
                         ),
-                        if (note.isNotEmpty)
-                          Text(
-                            "Note: $note",
-                            style: const TextStyle(fontSize: 11),
+
+                        if ((d['note'] ?? '').toString().isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text("Note: ${d['note']}"),
                           ),
 
-                        const SizedBox(height: 8),
-                        Divider(color: Colors.grey.shade300, height: 16),
+                        const Divider(height: 24),
 
-                        // QR Code small
-                        if (qrData.isNotEmpty) ...[
-                          Center(
-                            child: Column(
-                              children: [
-                                const Text(
-                                  "Scan to Verify",
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                QrImageView(
-                                  data: qrData,
-                                  version: QrVersions.auto,
-                                  size: 80, // 👈 smaller QR for A6
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  serial,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        /// Cash info
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Cash Date: ${d['cashDate'] ?? '—'}"),
+                              Text("Cashed By: ${d['cashedBy'] ?? '—'}"),
+                            ],
+                          ),
+                        ),
 
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 20),
 
+                        /// QR
+                        if ((d['qrData'] ?? '').toString().isNotEmpty)
+                          Column(
+                            children: [
+                              const Text("Scan to Verify"),
+                              const SizedBox(height: 6),
+                              QrImageView(
+                                data: d['qrData'],
+                                size: 90,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                d['serialNumber'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+
+                        const SizedBox(height: 12),
                         const Text(
                           "Talha Afzal Cloth House - System Generated Slip",
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey,
-                          ),
+                          style:
+                          TextStyle(fontSize: 10, color: Colors.grey),
                         ),
                       ],
                     ),

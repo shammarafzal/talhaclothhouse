@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:talhaclothhouse/customers/view_customer_invoice_screen.dart';
+import 'package:intl/intl.dart';
 
-import 'CreateCustomerReceiptScreen.dart';
 import 'add_customer_screen.dart';
-
+import 'view_customer_invoice_screen.dart';
+import 'add_old_bill_screen.dart';
+import 'view_oldbill.dart';
 
 class CustomerDetailScreen extends StatelessWidget {
   final String customerId;
@@ -40,15 +41,14 @@ class CustomerDetailScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.receipt_long),
-            tooltip: "New Sales Invoice",
+            icon: const Icon(Icons.history),
+            tooltip: "Add Old Bill",
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => CreateCustomerReceiptScreen(
+                  builder: (_) => AddOldBillScreen(
                     customerId: customerId,
-                    customerData: customerData,
                   ),
                 ),
               );
@@ -64,13 +64,15 @@ class CustomerDetailScreen extends StatelessWidget {
             children: [
               _buildHeaderCard(),
               const SizedBox(height: 16),
-              _buildSalesSummaryCard(),
+              _buildSalesAndBillsCard(context),
             ],
           ),
         ),
       ),
     );
   }
+
+  // ================= HEADER =================
 
   Widget _buildHeaderCard() {
     final name = (customerData['name'] ?? '').toString();
@@ -87,7 +89,7 @@ class CustomerDetailScreen extends StatelessWidget {
             CircleAvatar(
               radius: 26,
               child: Text(
-                (name.isEmpty ? "C" : name[0].toUpperCase()),
+                name.isNotEmpty ? name[0].toUpperCase() : "C",
                 style: const TextStyle(fontSize: 22),
               ),
             ),
@@ -115,161 +117,200 @@ class CustomerDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSalesSummaryCard() {
+  // ================= SALES + OLD BILLS =================
+
+  Widget _buildSalesAndBillsCard(BuildContext context) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection("customers")
-              .doc(customerId)
-              .collection("sales")
-              .orderBy('createdAt', descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text("Error: ${snapshot.error}");
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const LinearProgressIndicator();
-            }
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Sales & Bills",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
 
-            final docs = snapshot.data?.docs ?? [];
-            final now = DateTime.now();
+            // ================= SALES INVOICES =================
 
-            double total7 = 0, total30 = 0, totalAll = 0;
-            double remainingAll = 0;
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection("customers")
+                  .doc(customerId)
+                  .collection("sales")
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const LinearProgressIndicator();
+                }
 
-            for (final d in docs) {
-              final m = d.data();
-              final ts = (m['createdAt'] as Timestamp?)?.toDate() ??
-                  DateTime.now();
-              final diffDays = now.difference(ts).inDays;
-              final total = (m['totalAmount'] ?? 0).toDouble();
-              final paid = (m['amountPaid'] ?? 0).toDouble();
-              final due = total - paid;
+                final docs = snap.data!.docs;
 
-              totalAll += total;
-              remainingAll += due;
-
-              if (diffDays <= 7) total7 += total;
-              if (diffDays <= 30) total30 += total;
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Sales Summary",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _chip("Last 7 days: PKR ${total7.toStringAsFixed(0)}"),
-                    _chip("Last 30 days: PKR ${total30.toStringAsFixed(0)}"),
-                    _chip("Total Sales: PKR ${totalAll.toStringAsFixed(0)}"),
-                    _chip("Total Due: PKR ${remainingAll.toStringAsFixed(0)}"),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(),
-                const SizedBox(height: 8),
-                const Text(
-                  "All Sales Invoices",
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                if (docs.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text("No invoices yet."),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: docs.length,
-                    itemBuilder: (contextList, index) {
-                      final doc = docs[index];
-                      final m = doc.data();
-                      // 🔧 use invoiceNumber (what we save from CreateCustomerReceiptScreen)
-                      final invoiceNo = (m['invoiceNumber'] ?? '').toString();
-                      final date = (m['date'] ?? '').toString();
-                      final total = (m['totalAmount'] ?? 0).toDouble();
-                      final paid = (m['amountPaid'] ?? 0).toDouble();
-                      final status =
-                      (m['paymentStatus'] ?? 'Unpaid').toString();
+                    const Text(
+                      "Invoices",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    if (docs.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text("No invoices yet."),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: docs.length,
+                        itemBuilder: (ctx, i) {
+                          final m = docs[i].data();
+                          final invoiceNo =
+                          (m['invoiceNumber'] ?? '').toString();
+                          final date = (m['date'] ?? '').toString();
+                          final total =
+                          (m['totalAmount'] ?? 0).toDouble();
+                          final paid =
+                          (m['amountPaid'] ?? 0).toDouble();
+                          final status =
+                          (m['paymentStatus'] ?? 'Unpaid').toString();
 
-                      Color statusColor;
-                      switch (status) {
-                        case 'Paid':
-                          statusColor = Colors.green;
-                          break;
-                        case 'Partial':
-                          statusColor = Colors.orange;
-                          break;
-                        default:
-                          statusColor = Colors.red;
-                      }
+                          Color color = status == 'Paid'
+                              ? Colors.green
+                              : status == 'Partial'
+                              ? Colors.orange
+                              : Colors.red;
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ListTile(
-                          leading: const Icon(Icons.receipt_long),
-                          title: Text(
-                            invoiceNo.isEmpty
-                                ? "Invoice"
-                                : "Invoice #$invoiceNo",
-                          ),
-                          subtitle: Text(
-                            "$date • Total: ${total.toStringAsFixed(0)} • Paid: ${paid.toStringAsFixed(0)}",
-                          ),
-                          trailing: Chip(
-                            label: Text(
-                              status,
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            backgroundColor: statusColor.withOpacity(0.1),
-                            labelStyle: TextStyle(
-                              color: statusColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              contextList,
-                              MaterialPageRoute(
-                                builder: (_) => ViewCustomerInvoiceScreen(
-                                  customerId: customerId,
-                                  saleId: doc.id,
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: ListTile(
+                              leading:
+                              const Icon(Icons.receipt_long),
+                              title: Text("Invoice #$invoiceNo"),
+                              subtitle: Text(
+                                "$date • Total: ${total.toStringAsFixed(0)} • Paid: ${paid.toStringAsFixed(0)}",
+                              ),
+                              trailing: Chip(
+                                label: Text(status,
+                                    style:
+                                    const TextStyle(fontSize: 11)),
+                                backgroundColor:
+                                color.withOpacity(0.1),
+                                labelStyle: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            );
-                          },
+                              onTap: () {
+                                Navigator.push(
+                                  ctx,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ViewCustomerInvoiceScreen(
+                                          customerId: customerId,
+                                          saleId: docs[i].id,
+                                        ),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // ================= OLD BILLS =================
+
+            const Text(
+              "Old Bills",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection("customers")
+                  .doc(customerId)
+                  .collection("oldBills")
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const LinearProgressIndicator();
+                }
+
+                final docs = snap.data!.docs;
+
+                if (docs.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text("No old bills."),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: docs.length,
+                  itemBuilder: (ctx, i) {
+                    final m = docs[i].data();
+                    final billNo =
+                    (m['billNumber'] ?? 'Old Bill').toString();
+                    final amount =
+                    (m['amount'] ?? 0).toDouble();
+
+                    final ts =
+                    (m['createdAt'] as Timestamp?)?.toDate();
+                    final dateText = ts == null
+                        ? ''
+                        : DateFormat('dd/MM/yyyy').format(ts);
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: ListTile(
+                        leading: const Icon(Icons.history),
+                        title: Text(billNo),
+                        subtitle: Text(
+                          "Date: $dateText • Amount: ${amount.toStringAsFixed(0)}",
                         ),
-                      );
-                    },
-                  ),
-              ],
-            );
-          },
+                        trailing: const Chip(
+                          label: Text("Old",
+                              style: TextStyle(fontSize: 11)),
+                          backgroundColor:
+                          Color(0xFFE3F2FD),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => ViewOldBillScreen(
+                                customerId: customerId,
+                                billId: docs[i].id,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _chip(String text) {
-    return Chip(
-      label: Text(text),
-      backgroundColor: Colors.blue.shade50,
     );
   }
 }

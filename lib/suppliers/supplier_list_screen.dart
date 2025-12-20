@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+
 import 'add_supplier_screen.dart';
 import 'supplier_detail_screen.dart';
 
@@ -19,27 +21,61 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     super.dispose();
   }
 
-  /// ✅ Keep Firebase image URLs mostly as-is
-  /// We only touch very old appspot links; all new firebasestorage.app
-  /// download URLs from getDownloadURL() are used directly.
-  String fixFirebaseImageUrl(String url) {
-    if (url.isEmpty) return url;
-
-    // If it's a full URL already (starts with http), don't mess with it
-    if (url.startsWith('http')) {
-      // If you *do* have some old appspot URLs saved, you can normalize them here:
-      if (url.contains('talhaclothhouse.appspot.com')) {
-        url = url.replaceAll(
-          'talhaclothhouse.appspot.com',
-          'talhaclothhouse.firebasestorage.app',
-        );
-      }
+  /// 🔹 Get image download URL from Firebase Storage using supplierId
+  Future<String?> _getSupplierImageUrl(String supplierId) async {
+    try {
+      final ref = FirebaseStorage.instance.ref('suppliers/$supplierId.jpg');
+      final url = await ref.getDownloadURL();
+      debugPrint('✅ Got image URL for $supplierId -> $url');
       return url;
+    } catch (e) {
+      debugPrint('❌ No image for $supplierId or error: $e');
+      return null;
     }
+  }
 
-    // If in some case you only stored the path (very unlikely in your case),
-    // you could build a full URL here. But for now we just return it.
-    return url;
+  /// 🔹 Build avatar with FutureBuilder so web uses Firebase JS SDK to fetch URL
+  Widget _buildSupplierAvatar({
+    required String supplierId,
+    required String name,
+    required String number,
+  }) {
+    return FutureBuilder<String?>(
+      future: _getSupplierImageUrl(supplierId),
+      builder: (context, snapshot) {
+        // While loading or if error, show initials / number
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            snapshot.hasError ||
+            snapshot.data == null ||
+            snapshot.data!.isEmpty) {
+          final label = number.isNotEmpty
+              ? number
+              : (name.isNotEmpty ? name[0].toUpperCase() : "?");
+
+          return CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.grey.shade200,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        }
+
+        final url = snapshot.data!;
+        return CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.grey.shade200,
+          backgroundImage: NetworkImage(url),
+          onBackgroundImageError: (error, stackTrace) {
+            debugPrint("❌ Failed to load image from NetworkImage: $url");
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -55,7 +91,8 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
               controller: searchCtrl,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: "Search by name, phone, or number (e.g., 1 or SUP-1)",
+                hintText:
+                "Search by name, phone, or number (e.g., 1 or SUP-1)",
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
@@ -129,9 +166,6 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
               final name = data["name"]?.toString() ?? "";
               final phone = data["phone"]?.toString() ?? "";
               final address = data["address"]?.toString() ?? "";
-              final imageUrl = data["imageUrl"]?.toString() ?? "";
-
-              final fixedUrl = fixFirebaseImageUrl(imageUrl);
 
               return Card(
                 elevation: 2,
@@ -139,28 +173,10 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: fixedUrl.isNotEmpty
-                        ? NetworkImage(fixedUrl)
-                        : null,
-                    onBackgroundImageError: (_, __) {
-                      debugPrint("❌ Failed to load image: $fixedUrl");
-                    },
-                    child: fixedUrl.isEmpty
-                        ? Text(
-                      number.isNotEmpty
-                          ? number
-                          : (name.isNotEmpty
-                          ? name[0].toUpperCase()
-                          : "?"),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    )
-                        : null,
+                  leading: _buildSupplierAvatar(
+                    supplierId: id,
+                    name: name,
+                    number: number,
                   ),
                   title: Text(name),
                   subtitle: Column(
