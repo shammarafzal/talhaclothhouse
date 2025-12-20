@@ -22,10 +22,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Row(
           children: [
-            // Sidebar (Desktop / Tablet only)
             if (!isMobile(context)) const Sidebar(),
-
-            // Main body
             Expanded(
               child: Column(
                 children: [
@@ -56,7 +53,7 @@ class Sidebar extends StatelessWidget {
         children: [
           DrawerHeader(
             child: Text(
-              "Talha Afzal Cloth House",
+              "طلحہ افضل کلاتھ ہاؤس",
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 22,
@@ -65,26 +62,27 @@ class Sidebar extends StatelessWidget {
             ),
           ),
 
-          // For now sidebar items are static; you can wire navigation later
-          menuItem(Icons.people, "Customers", () {
+          menuItem(Icons.people, "گاہک", () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CustomerListScreen()),
             );
           }),
-          menuItem(Icons.store, "Suppliers", () {
+          menuItem(Icons.store, "سپلائر", () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SupplierListScreen()),
             );
           }),
-          menuItem(Icons.shopping_cart, "Sales", () {
+          menuItem(Icons.shopping_cart, "سیلز", () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CreateCustomerInvoiceScreen()),
+              MaterialPageRoute(
+                builder: (_) => const CreateCustomerInvoiceScreen(),
+              ),
             );
           }),
-          menuItem(Icons.inventory, "Inventory", () {
+          menuItem(Icons.inventory, "اسٹاک / انوینٹری", () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -92,7 +90,7 @@ class Sidebar extends StatelessWidget {
               ),
             );
           }),
-          menuItem(Icons.production_quantity_limits, "Products", () {
+          menuItem(Icons.production_quantity_limits, "پراڈکٹس", () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -100,8 +98,7 @@ class Sidebar extends StatelessWidget {
               ),
             );
           }),
-          // menuItem(Icons.shopping_bag, "Purchases", () {}),
-          menuItem(Icons.payments, "All Suppliers Payments", () {
+          menuItem(Icons.payments, "تمام سپلائر کی ادائیگیاں", () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -109,7 +106,6 @@ class Sidebar extends StatelessWidget {
               ),
             );
           }),
-          // menuItem(Icons.settings, "Settings", () {}),
         ],
       ),
     );
@@ -148,7 +144,7 @@ class TopBar extends StatelessWidget {
             ),
 
           Text(
-            "Dashboard",
+            "ڈیش بورڈ",
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -179,14 +175,13 @@ class DashboardContent extends StatelessWidget {
       columns = 4;
     }
 
-    // 🔹 Added "All Suppliers Payments" card
     final data = [
-      ["Customers", Icons.people],
-      ["Suppliers", Icons.store],
-      ["Sales", Icons.shopping_cart],
-      ["Inventory", Icons.inventory],
-      ["All Suppliers Payments", Icons.payments],
-      ["Pay Slips", Icons.receipt_long],
+      ["گاہک", Icons.people],
+      ["لومو والے", Icons.store],
+      ["سیلز", Icons.shopping_cart],
+      ["اسٹاک", Icons.inventory],
+      ["تمام لومو والے کی ادائیگیاں", Icons.payments],
+      ["پرچی بنائیں", Icons.receipt_long],
     ];
 
     return GridView.builder(
@@ -195,47 +190,47 @@ class DashboardContent extends StatelessWidget {
         crossAxisCount: columns,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 3, // smaller cards
+        childAspectRatio: 3,
       ),
       itemCount: data.length,
       itemBuilder: (_, index) {
         return DashboardCard(
           title: data[index][0] as String,
           icon: data[index][1] as IconData,
-            onTap: () {
-              switch (data[index][0]) {
-                case 'Suppliers':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SupplierListScreen(),
-                    ),
-                  );
-                  break;
-                case 'All Suppliers Payments':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AllSuppliersBalanceScreen(),
-                    ),
-                  );
-                  break;
-                case 'Pay Slips':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PaySlipsScreen(),
-                    ),
-                  );
-                  break;
-                default:
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${data[index][0]} screen coming soon!'),
-                    ),
-                  );
-              }
+          onTap: () {
+            switch (data[index][0]) {
+              case 'لومو والے':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SupplierListScreen(),
+                  ),
+                );
+                break;
+              case 'تمام لومو والے کی ادائیگیاں':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AllSuppliersBalanceScreen(),
+                  ),
+                );
+                break;
+              case 'لومو والے':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PaySlipsScreen(),
+                  ),
+                );
+                break;
+              default:
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${data[index][0]} اسکرین جلد آرہی ہے'),
+                  ),
+                );
             }
+          },
         );
       },
     );

@@ -23,75 +23,138 @@ class AllProductsScreen extends StatelessWidget {
     final fontData =
     await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
     final urduFont = pw.Font.ttf(fontData);
-
+    final itemStyle = pw.TextStyle(
+      font: urduFont,
+      fontSize: 11,
+    );
     final pdf = pw.Document();
-
     final dateStr = DateFormat('dd MMM yyyy').format(DateTime.now());
 
     final titleStyle = pw.TextStyle(
       font: urduFont,
-      fontSize: 20,
+      fontSize: 22,
       fontWeight: pw.FontWeight.bold,
     );
 
-    final headerStyle = pw.TextStyle(
+    final shopStyle = pw.TextStyle(
       font: urduFont,
-      fontSize: 11,
+      fontSize: 14,
       fontWeight: pw.FontWeight.bold,
     );
 
-    final itemStyle = pw.TextStyle(
+    final normalStyle = pw.TextStyle(
       font: urduFont,
       fontSize: 11,
+    );
+
+    final priceStyle = pw.TextStyle(
+      font: urduFont,
+      fontSize: 11,
+      fontWeight: pw.FontWeight.bold,
     );
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
-        margin: const pw.EdgeInsets.all(18),
+        margin: const pw.EdgeInsets.all(16),
         build: (context) {
           return pw.Directionality(
             textDirection: pw.TextDirection.rtl,
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
-                pw.Text("قیمت نامہ", style: titleStyle, textAlign: pw.TextAlign.center),
-                pw.SizedBox(height: 6),
-                pw.Text("طلحہ افضل کلاتھ ہاؤس", style: headerStyle, textAlign: pw.TextAlign.center),
-                pw.Text("فون: 0303-6339313", style: itemStyle, textAlign: pw.TextAlign.center),
-                pw.Text("ناصر کلاتھ مارکیٹ، ملتان", style: itemStyle, textAlign: pw.TextAlign.center),
+                // ================= HEADER =================
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 10),
+                  decoration: pw.BoxDecoration(
+                    borderRadius: pw.BorderRadius.circular(6),
+                    border: pw.Border.all(color: PdfColors.black),
+                  ),
+                  child: pw.Column(
+                    children: [
+                      pw.Text("قیمت نامہ",
+                          style: titleStyle, textAlign: pw.TextAlign.center),
+                      pw.SizedBox(height: 4),
+                      pw.Text("طلحہ افضل کلاتھ ہاؤس",
+                          style: shopStyle,
+                          textAlign: pw.TextAlign.center),
+                      pw.Text("فون: 0303-6339313",
+                          style: normalStyle,
+                          textAlign: pw.TextAlign.center),
+                      pw.Text("ناصر کلاتھ مارکیٹ، ملتان",
+                          style: normalStyle,
+                          textAlign: pw.TextAlign.center),
+                    ],
+                  ),
+                ),
 
                 pw.SizedBox(height: 8),
-                pw.Text("پرنٹ کی تاریخ: $dateStr",
-                    style: pw.TextStyle(font: urduFont, fontSize: 9),
-                    textAlign: pw.TextAlign.center),
 
+                pw.Text(
+                  "پرنٹ کی تاریخ: $dateStr",
+                  style: pw.TextStyle(font: urduFont, fontSize: 9),
+                  textAlign: pw.TextAlign.center,
+                ),
+
+                pw.SizedBox(height: 10),
                 pw.Divider(),
 
+                // ================= PRODUCT LIST =================
                 ...products.map((doc) {
                   final data = doc.data();
                   final name = (data['name'] ?? '').toString();
                   final rate = (data['rate'] ?? 0).toDouble();
 
-                  return pw.Padding(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  return pw.Container(
+                    padding:
+                    const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border(
+                        bottom: pw.BorderSide(
+                          color: PdfColors.grey300,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child:pw.Table(
+                      columnWidths: const {
+                        0: pw.FlexColumnWidth(1), // PRICE
+                        1: pw.FlexColumnWidth(3), // PRODUCT NAME
+                      },
                       children: [
-                        pw.Text("روپے ${rate.toStringAsFixed(0)}", style: itemStyle),
-                        pw.Expanded(
-                          child: pw.Text(
-                            name,
-                            style: itemStyle,
-                            textAlign: pw.TextAlign.right,
-                          ),
+                        pw.TableRow(
+                          children: [
+                            // PRICE (LEFT)
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                              child: pw.Text(
+                                "روپے ${rate.toStringAsFixed(0)}",
+                                style: itemStyle,
+                                textAlign: pw.TextAlign.left,
+                              ),
+                            ),
+
+                            // PRODUCT NAME (RIGHT)
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                              child: pw.Text(
+                                name,
+                                style: itemStyle,
+                                textAlign: pw.TextAlign.right,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+
                   );
                 }).toList(),
 
+                pw.SizedBox(height: 10),
                 pw.Divider(),
+
+                // ================= FOOTER =================
                 pw.Text(
                   "قیمتیں بغیر اطلاع کے تبدیل ہو سکتی ہیں",
                   style: pw.TextStyle(font: urduFont, fontSize: 8),
@@ -108,6 +171,7 @@ class AllProductsScreen extends StatelessWidget {
       onLayout: (format) async => pdf.save(),
     );
   }
+
 
 
   // ---------------- UI ----------------

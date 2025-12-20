@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -89,6 +90,19 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
   }
 
   Future<void> _printSlip(Map<String, dynamic> slipData) async {
+    final fontData =
+    await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
+    final urduFont = pw.Font.ttf(fontData);
+    final small = pw.TextStyle(
+      font: urduFont,
+      fontSize: 9,
+    );
+
+    final bold = pw.TextStyle(
+      font: urduFont,
+      fontSize: 9,
+      fontWeight: pw.FontWeight.bold,
+    );
 
 
     final pdf = pw.Document();
@@ -112,25 +126,46 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
     final cashedBy = slipData['cashedBy'] ?? '';
 
     final statusColor = status == 'Paid' ? PdfColors.green : PdfColors.red;
-    final small = pw.TextStyle(fontSize: 9);
-    final bold = pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold);
+
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a5,
         margin: const pw.EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
         build: (context) {
-          return pw.Container(
+          return pw.Directionality(
+              textDirection: pw.TextDirection.rtl,
+            child: pw.Container(
             padding: const pw.EdgeInsets.all(8),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
-                pw.Text(
-                  "PAY SLIP",
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+                // ---------- HEADER ----------
+                pw.Container(
+                  padding: const pw.EdgeInsets.only(bottom: 8),
+                  child: pw.Column(
+                    children: [
+                      pw.Text(
+                        "ادائیگی کی پرچی",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        "طلحہ افضل کلاتھ ہاؤس",
+                        style: pw.TextStyle(font: urduFont, fontSize: 10),
+                      ),
+                      pw.Text(
+                        "فون: 0303-6339313",
+                        style: pw.TextStyle(font: urduFont, fontSize: 9),
+                      ),
+                    ],
+                  ),
                 ),
-                pw.SizedBox(height: 6),
+
+                pw.Divider(),
 
                 // 🔹 Dates (Slip Date + Pay Date)
                 pw.Row(
@@ -139,10 +174,10 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                     pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text("Slip Date: $slipDate ($slipDay)", style: small),
-                        pw.Text("Pay Date: $payDate ($payDay)", style: small),
-                        pw.Text("Time: $time", style: small),
-                        pw.Text("Slip No: $serial", style: small),
+                        pw.Text("پرچی کی تاریخ: $slipDate ($slipDay)", style: small),
+                        pw.Text("ادائیگی کی تاریخ: $payDate ($payDay)", style: small),
+                        pw.Text("وقت: $time", style: small),
+                        pw.Text("پرچی نمبر: $serial", style: small),
                       ],
                     ),
                     pw.Container(
@@ -167,7 +202,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                 pw.Divider(),
 
                 // Supplier
-                pw.Text("Supplier", style: bold),
+                pw.Text("لوم والا کی تفصیل", style: bold),
                 pw.Text(supplierName, style: small),
                 if (supplierPhone.toString().isNotEmpty)
                   pw.Text(supplierPhone, style: small),
@@ -178,7 +213,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                 pw.Divider(),
 
                 // Issuer
-                pw.Text("Issuer", style: bold),
+                pw.Text("دکاندار کی تفصیل", style: bold),
                 pw.Text(issuerName, style: small),
                 pw.Text(issuerPhone, style: small),
                 pw.Text(issuerAddress, style: small),
@@ -190,14 +225,18 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text("Amount:", style: bold),
-                    pw.Text("${amount.toStringAsFixed(2)} PKR",
-                        style: pw.TextStyle(
-                            fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                    pw.Text("رقم:", style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                    )),
                     pw.Text(
-                      "Amount in Words:",
-                      style: bold,
+                      "${amount.toStringAsFixed(2)} روپے",
+                      style: pw.TextStyle(
+                        fontSize: 13,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
+                    pw.Text("رقم الفاظ میں:", style: bold),
                     pw.Text(
                       amountInWords,
                       style: small,
@@ -207,7 +246,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                 if (note.toString().isNotEmpty)
                   pw.Padding(
                     padding: const pw.EdgeInsets.only(top: 2),
-                    child: pw.Text("Note: $note", style: small),
+                    child: pw.Text("نوٹ: $note", style: small),
                   ),
 
                 pw.SizedBox(height: 6),
@@ -227,13 +266,13 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Text("Pay Date: $payDate", style: small),
-                          pw.Text("Cash Date: ____________", style: small),
+                          pw.Text("ادائیگی کی تاریخ: $payDate", style: small),
+                          pw.Text("نقد وصولی کی تاریخ: ____________", style: small),
                         ],
                       ),
                       pw.SizedBox(height: 3),
                       pw.Text(
-                        "Cashed By: ${cashedBy.toString().isNotEmpty ? cashedBy : "______________________"}",
+                        "وصول کرنے والا: ${cashedBy.toString().isNotEmpty ? cashedBy : "______________________"}",
                         style: small,
                       ),
                     ],
@@ -247,7 +286,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                   pw.Center(
                     child: pw.Column(
                       children: [
-                        pw.Text("Scan to Verify", style: bold),
+                        pw.Text("تصدیق کے لیے اسکین کریں", style: bold),
                         pw.SizedBox(height: 3),
                         pw.BarcodeWidget(
                           barcode: pw.Barcode.qrCode(),
@@ -262,13 +301,21 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                   ),
 
                 pw.SizedBox(height: 6),
-                pw.Text(
-                  "Talha Afzal Cloth House - System Generated Slip",
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                pw.Divider(),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 6),
+                  child: pw.Text(
+                    "یہ کمپیوٹر سے تیار کردہ پرچی ہے",
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      font: urduFont,
+                      fontSize: 8,
+                    ),
+                  ),
                 ),
               ],
             ),
+            )
           );
         },
       ),
@@ -378,14 +425,14 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
 
     if (_selectedPayDate == null) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please select a Pay Date")));
+          .showSnackBar(const SnackBar(content: Text("ادائیگی کی تاریخ منتخب کریں")),);
       return;
     }
 
     final amount = double.tryParse(amountController.text.trim()) ?? 0;
     if (amount <= 0) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Enter a valid amount")));
+          .showSnackBar(const SnackBar(content: Text("درست رقم درج کریں")),);
       return;
     }
 
@@ -440,7 +487,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Pay slip saved & printed")));
+          .showSnackBar(const SnackBar(content: Text("پرچی محفوظ ہو گئی اور پرنٹ ہو گئی")),);
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -454,7 +501,9 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Pay Slip")),
+      appBar: AppBar(
+        title: const Text("پرچی بنائیں"),
+      ),
       body: Container(
         color: Colors.grey.shade100,
         padding: const EdgeInsets.all(16),
@@ -470,9 +519,10 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text("Pay Slip Details",
-                        style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    const Text(
+                      "پرچی کی تفصیل",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 16),
 
 
@@ -483,7 +533,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       controller: payDateController,
                       readOnly: true,
                       decoration: const InputDecoration(
-                        labelText: "Pay Date",
+                        labelText: "ادائیگی کی تاریخ",
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.date_range),
                       ),
@@ -497,7 +547,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
-                        labelText: "Amount",
+                        labelText: "رقم",
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.currency_rupee),
                       ),
@@ -509,7 +559,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                       controller: noteController,
                       maxLines: 2,
                       decoration: const InputDecoration(
-                        labelText: "Note (optional)",
+                        labelText: "نوٹ",
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.note),
                       ),
@@ -530,7 +580,8 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
                         )
                             : const Icon(Icons.print),
                         label: Text(
-                            saving ? "Saving & Printing..." : "Save & Print"),
+                          saving ? "محفوظ ہو رہا ہے..." : "محفوظ کریں اور پرنٹ کریں",
+                        ),
                       ),
                     ),
                   ],
