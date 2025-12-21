@@ -97,7 +97,6 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
       font: urduFont,
       fontSize: 9,
     );
-
     final bold = pw.TextStyle(
       font: urduFont,
       fontSize: 9,
@@ -126,199 +125,370 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
     final cashedBy = slipData['cashedBy'] ?? '';
 
     final statusColor = status == 'Paid' ? PdfColors.green : PdfColors.red;
+    Future<pw.Widget> buildUrduHeader() async {
+      final fontData =
+      await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
+      final urduFont = pw.Font.ttf(fontData);
 
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a5,
-        margin: const pw.EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
-        build: (context) {
-          return pw.Directionality(
-              textDirection: pw.TextDirection.rtl,
-            child: pw.Container(
-            padding: const pw.EdgeInsets.all(8),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      return pw.Container(
+        padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 8), // 🔽 less padding
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(width: 1),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // ---------- HEADER ----------
+                // 🏷️ LEFT — SHOP BRAND
                 pw.Container(
-                  padding: const pw.EdgeInsets.only(bottom: 8),
+                  width: 210, // 🔽 slightly smaller
                   child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        "ادائیگی کی پرچی",
+                        "طلحہ افضل",
                         style: pw.TextStyle(
                           font: urduFont,
-                          fontSize: 16,
+                          fontSize: 26, // ⬇️ was 30
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      pw.SizedBox(height: 2), // ⬇️ tighter
+                      pw.Text(
+                        "رضائی، کمبل، بیڈ شیٹ اسٹور",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 13, // ⬇️ was 15
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 📞 RIGHT — CONTACT DETAILS
+                pw.Container(
+                  width: 125, // 🔽 slightly smaller
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        "طلحہ افضل",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9, // ⬇️ was 10
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
                       pw.Text(
-                        "طلحہ افضل کلاتھ ہاؤس",
-                        style: pw.TextStyle(font: urduFont, fontSize: 10),
-                      ),
-                      pw.Text(
-                        "فون: 0303-6339313",
-                        style: pw.TextStyle(font: urduFont, fontSize: 9),
-                      ),
-                    ],
-                  ),
-                ),
-
-                pw.Divider(),
-
-                // 🔹 Dates (Slip Date + Pay Date)
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text("پرچی کی تاریخ: $slipDate ($slipDay)", style: small),
-                        pw.Text("ادائیگی کی تاریخ: $payDate ($payDay)", style: small),
-                        pw.Text("وقت: $time", style: small),
-                        pw.Text("پرچی نمبر: $serial", style: small),
-                      ],
-                    ),
-                    pw.Container(
-                      padding:
-                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.grey200,
-                        borderRadius: pw.BorderRadius.circular(4),
-                      ),
-                      child: pw.Text(
-                        status,
+                        "0303-6339313",
                         style: pw.TextStyle(
-                            color: statusColor,
-                            fontSize: 9,
-                            fontWeight: pw.FontWeight.bold),
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-
-                pw.SizedBox(height: 6),
-                pw.Divider(),
-
-                // Supplier
-                pw.Text("لوم والا کی تفصیل", style: bold),
-                pw.Text(supplierName, style: small),
-                if (supplierPhone.toString().isNotEmpty)
-                  pw.Text(supplierPhone, style: small),
-                if (supplierAddress.toString().isNotEmpty)
-                  pw.Text(supplierAddress, style: small),
-
-                pw.SizedBox(height: 6),
-                pw.Divider(),
-
-                // Issuer
-                pw.Text("دکاندار کی تفصیل", style: bold),
-                pw.Text(issuerName, style: small),
-                pw.Text(issuerPhone, style: small),
-                pw.Text(issuerAddress, style: small),
-
-                pw.SizedBox(height: 6),
-                pw.Divider(),
-
-                // Amount + Note
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Text("رقم:", style: pw.TextStyle(
-                      fontSize: 11,
-                      fontWeight: pw.FontWeight.bold,
-                    )),
-                    pw.Text(
-                      "${amount.toStringAsFixed(2)} روپے",
-                      style: pw.TextStyle(
-                        fontSize: 13,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.Text("رقم الفاظ میں:", style: bold),
-                    pw.Text(
-                      amountInWords,
-                      style: small,
-                    ),
-                  ],
-                ),
-                if (note.toString().isNotEmpty)
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.only(top: 2),
-                    child: pw.Text("نوٹ: $note", style: small),
-                  ),
-
-                pw.SizedBox(height: 6),
-
-                // ✅ Cash Date + Cashed By block
-                pw.Container(
-                  padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: pw.BoxDecoration(
-                    borderRadius: pw.BorderRadius.circular(4),
-                    border:
-                    pw.Border.all(color: PdfColors.grey300, width: 0.5),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text("ادائیگی کی تاریخ: $payDate", style: small),
-                          pw.Text("نقد وصولی کی تاریخ: ____________", style: small),
-                        ],
-                      ),
-                      pw.SizedBox(height: 3),
                       pw.Text(
-                        "وصول کرنے والا: ${cashedBy.toString().isNotEmpty ? cashedBy : "______________________"}",
-                        style: small,
+                        "0300-0359074",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 4), // ⬇️ was 6
+
+                      pw.Text(
+                        "وقاص افضل",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        "0300-6766691",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+
+                      pw.SizedBox(height: 4),
+
+                      pw.Text(
+                        "عباس افضل",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        "0303-2312531",
+                        style: pw.TextStyle(
+                          font: urduFont,
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
-                  ),
-                ),
-
-                pw.SizedBox(height: 8),
-                pw.Divider(),
-
-                if (qrData.toString().isNotEmpty)
-                  pw.Center(
-                    child: pw.Column(
-                      children: [
-                        pw.Text("تصدیق کے لیے اسکین کریں", style: bold),
-                        pw.SizedBox(height: 3),
-                        pw.BarcodeWidget(
-                          barcode: pw.Barcode.qrCode(),
-                          data: qrData,
-                          width: 70,
-                          height: 70,
-                        ),
-                        pw.SizedBox(height: 3),
-                        pw.Text(serial, style: bold),
-                      ],
-                    ),
-                  ),
-
-                pw.SizedBox(height: 6),
-                pw.Divider(),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.only(top: 6),
-                  child: pw.Text(
-                    "یہ کمپیوٹر سے تیار کردہ پرچی ہے",
-                    textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(
-                      font: urduFont,
-                      fontSize: 8,
-                    ),
                   ),
                 ),
               ],
             ),
-            )
-          );
-        },
-      ),
+
+            pw.SizedBox(height: 4), // ⬇️ was 6
+            pw.Divider(),
+
+            // 📍 Address
+            pw.Text(
+              "دکان نمبر 49، 48 ہول سیل کلاتھ مارکیٹ نزد سلطان مارکیٹ چونگی نمبر 11، مخدوم رشید روڈ، ملتان",
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(
+                font: urduFont,
+                fontSize: 8.5, // ⬇️ was 9
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final sectionTitle = pw.TextStyle(
+      font: urduFont,
+      fontSize: 11,
+      fontWeight: pw.FontWeight.bold,
+    );
+
+    final normalUrdu = pw.TextStyle(
+      font: urduFont,
+      fontSize: 9,
+    );
+    final headerWidget = await buildUrduHeader();
+        pdf.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a5,
+            margin: const pw.EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
+            build: (context) {
+              return pw.Directionality(
+                textDirection: pw.TextDirection.rtl,
+                child: pw.ListView(
+                  children: [
+
+                    // ================= HEADER =================
+                    headerWidget,
+
+                    pw.SizedBox(height: 6),
+
+                    // ================= TITLE =================
+                    pw.Text(
+                      "ادائیگی کی پرچی",
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 16,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+
+                    pw.Divider(),
+
+                    // ================= META =================
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                      child: pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+
+                          // RIGHT (because RTL) — TEXT
+                          pw.SizedBox(
+                            width: 150,
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text("پرچی نمبر: $serial", style: normalUrdu),
+                                pw.Text("پرچی کی تاریخ: $slipDate ($slipDay)", style: normalUrdu),
+                                pw.Text("ادائیگی کی تاریخ: $payDate ($payDay)", style: normalUrdu),
+                                pw.Text("وقت: $time", style: normalUrdu),
+                              ],
+                            ),
+                          ),
+
+                          // CENTER — QR (ONLY ONE QR)
+                          if (qrData.isNotEmpty)
+                            pw.Container(
+                              width: 55,
+                              height: 55,
+                              child: pw.BarcodeWidget(
+                                barcode: pw.Barcode.qrCode(),
+                                data: qrData,
+                              ),
+                            ),
+
+                          // LEFT — STATUS
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: pw.BoxDecoration(
+                              color: PdfColors.grey200,
+                              borderRadius: pw.BorderRadius.circular(4),
+                            ),
+                            child: pw.Text(
+                              status == 'Paid' ? 'ادا شدہ' : 'بقایاجات',
+                              style: pw.TextStyle(
+                                font: urduFont,
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                                color: status == 'Paid'
+                                    ? PdfColors.green
+                                    : PdfColors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    pw.Divider(height: 8),
+                    // ================= SUPPLIER =================
+                    pw.Text(
+                      "لوم والے کی تفصیل",
+                      style: sectionTitle, // already bold
+                    ),
+
+                    pw.SizedBox(height: 4),
+
+                    pw.Align(
+                      alignment: pw.Alignment.centerRight, // visual LEFT (RTL)
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          // 🔹 NAME
+                          pw.Row(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.SizedBox(
+                                width: 60, // ✅ space between heading & value (~10 chars)
+                                child: pw.Text("نام:", style: sectionTitle),
+                              ),
+                              pw.Expanded(
+                                child: pw.Text(supplierName, style: normalUrdu),
+                              ),
+                            ],
+                          ),
+
+                          pw.SizedBox(height: 3),
+
+                          // 🔹 PHONE
+                          if (supplierPhone.isNotEmpty)
+                            pw.Row(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.SizedBox(
+                                  width: 60,
+                                  child: pw.Text("فون:", style: sectionTitle),
+                                ),
+                                pw.Expanded(
+                                  child: pw.Text(supplierPhone, style: normalUrdu),
+                                ),
+                              ],
+                            ),
+
+                          pw.SizedBox(height: 3),
+
+                          // 🔹 ADDRESS
+                          if (supplierAddress.isNotEmpty)
+                            pw.Row(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.SizedBox(
+                                  width: 60,
+                                  child: pw.Text("پتہ:", style: sectionTitle),
+                                ),
+                                pw.Expanded(
+                                  child: pw.Text(supplierAddress, style: normalUrdu),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+
+
+                    if (note.toString().isNotEmpty) ...[
+                      pw.SizedBox(height: 4),
+                      pw.Text("نوٹ: $note", style: normalUrdu),
+                    ],
+
+// ================= AMOUNT (MOVED UP & PROMINENT) =================
+                    // ================= AMOUNT (BALANCED SIZE) =================
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(width: 1), // thinner border
+                      ),
+                      child: pw.Column(
+                        children: [
+                          pw.Text("ادائیگی کی رقم", style: sectionTitle),
+                          pw.SizedBox(height: 3),
+
+                          pw.Text(
+                            "${amount.toStringAsFixed(0)} روپے",
+                            style: pw.TextStyle(
+                              font: urduFont,
+                              fontSize: 15, // ✅ reduced (was 20)
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            amountInWords,
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                              font: urduFont,
+                              fontSize: 8, // slightly smaller
+                            ),
+                          ),
+
+                          pw.Divider(height: 8),
+
+                          pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                "وصولی کی تاریخ: ____________________",
+                                style: normalUrdu,
+                              ),
+                              pw.Text(
+                                "وصول کرنے والا: ${cashedBy.isNotEmpty ? cashedBy : "____________________"}",
+                                style: normalUrdu,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+
+                    // ================= FOOTER =================
+                    pw.Text(
+                      "یہ کمپیوٹر سے تیار کردہ پرچی ہے",
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(font: urduFont, fontSize: 8),
+                    ),
+                  ],
+                ),
+              );
+            },
+          )
     );
 
     await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
@@ -445,7 +615,7 @@ class _CreatePaySlipScreenState extends State<CreatePaySlipScreen> {
       final payDateStr = DateFormat('dd/MM/yyyy').format(payDate);
       final slipDayName = DateFormat('EEEE').format(now);
       final payDayName = DateFormat('EEEE').format(payDate);
-      final timeStr = DateFormat('hh:mm a').format(now);
+      final timeStr = DateFormat('hh:mm').format(now);
 
       final serialNumber = await _generateSlipSerial();
 

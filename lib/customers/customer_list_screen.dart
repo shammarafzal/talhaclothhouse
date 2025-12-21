@@ -107,6 +107,14 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
+                    pw.Text(
+                      "0300-0359074",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
 
                     pw.SizedBox(height: 6),
 
@@ -119,7 +127,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                       ),
                     ),
                     pw.Text(
-                      "0300-0359074",
+                      "0300-6766691",
                       style: pw.TextStyle(
                         font: urduFont,
                         fontSize: 10,
@@ -162,17 +170,15 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             "دکان نمبر 49، 48 ہول سیل کلاتھ مارکیٹ نزد سلطان مارکیٹ چونگی نمبر 11، مخدوم رشید روڈ، ملتان",
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
-              font: urduFont,
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold
+                font: urduFont,
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold
             ),
           ),
         ],
       ),
     );
   }
-
-
   /// 🔹 Print filtered customers
   Future<void> _printCustomers(List<QueryDocumentSnapshot> customers) async {
     final pdf = pw.Document();
@@ -181,7 +187,9 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     final fontData =
     await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
     final urduFont = pw.Font.ttf(fontData);
-
+    final now = DateTime.now();
+    final dateStr = DateFormat('dd/MM/yyyy').format(now);
+    final timeStr = DateFormat('hh:mm').format(now);
     // 🧾 Build Header FIRST (async)
     final headerWidget = await buildUrduHeader();
 
@@ -234,7 +242,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                   ),
                   cellStyle: pw.TextStyle(
                     font: urduFont,
-                    fontSize: 9,
+                    fontSize: 12,
                   ),
                   headers: ['پتہ','فون نمبر', 'نام'],
                   data: customers.map((doc) {
@@ -252,9 +260,39 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
                 // 🕒 FOOTER DATE
                 pw.Text(
-                  'پرنٹ کی تاریخ: ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
+                  'پرنٹ کی تاریخ: ',
                   textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(font: urduFont, fontSize: 9),
+                  style: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  '$dateStr',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  'وقت:',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  timeStr,
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 9,
+                  ),
                 ),
 
                 pw.SizedBox(height: 6),
