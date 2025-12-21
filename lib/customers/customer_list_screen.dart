@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -38,48 +39,234 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     if (remaining < 0) remaining = 0;
     return remaining;
   }
+  Future<pw.Widget> buildUrduHeader() async {
+    final fontData =
+    await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
+    final urduFont = pw.Font.ttf(fontData);
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(width: 1), // black border
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+
+              // 🏷️ LEFT SIDE — SHOP BRAND (BIG & BOLD)
+              pw.Container(
+                width: 220,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      "طلحہ افضل",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 30, // 🔥 BIG BRAND
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      "رضائی، کمبل، بیڈ شیٹ اسٹور",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 15,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 📞 RIGHT SIDE — CONTACT DETAILS
+              pw.Container(
+                width: 130,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      "طلحہ افضل",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      "0303-6339313",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 6),
+
+                    pw.Text(
+                      "وقاص افضل",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      "0300-0359074",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+
+                    pw.SizedBox(height: 6),
+
+                    pw.Text(
+                      "عباس افضل",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      "0303-2312531",
+                      style: pw.TextStyle(
+                        font: urduFont,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+
+
+
+          pw.SizedBox(height: 6),
+          pw.Divider(),
+
+          // 📍 Address
+          pw.Text(
+            "دکان نمبر 49، 48 ہول سیل کلاتھ مارکیٹ نزد سلطان مارکیٹ چونگی نمبر 11، مخدوم رشید روڈ، ملتان",
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              font: urduFont,
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   /// 🔹 Print filtered customers
   Future<void> _printCustomers(List<QueryDocumentSnapshot> customers) async {
     final pdf = pw.Document();
 
+    // 🔤 Load Urdu Font
+    final fontData =
+    await rootBundle.load('assets/fonts/NotoSansArabic-Regular.ttf');
+    final urduFont = pw.Font.ttf(fontData);
+
+    // 🧾 Build Header FIRST (async)
+    final headerWidget = await buildUrduHeader();
+
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(24),
+        pageFormat: PdfPageFormat.a5,
+        margin: const pw.EdgeInsets.all(18),
         build: (context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                'Customer List',
-                style: pw.TextStyle(
-                  fontSize: 20,
-                  fontWeight: pw.FontWeight.bold,
+          return pw.Directionality(
+            textDirection: pw.TextDirection.rtl,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                // ✅ HEADER
+                headerWidget,
+
+                pw.SizedBox(height: 10),
+
+                // 🧾 TITLE
+                pw.Text(
+                  'گاہکوں کی فہرست',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-              pw.Text(
-                'City: $selectedCity',
-                style: const pw.TextStyle(fontSize: 12),
-              ),
-              pw.SizedBox(height: 12),
-              pw.Table.fromTextArray(
-                headers: ['Name', 'Phone', 'Address'],
-                data: customers.map((doc) {
-                  final d = doc.data() as Map<String, dynamic>;
-                  return [
-                    d['name'] ?? '',
-                    d['phone'] ?? '',
-                    d['address'] ?? '',
-                  ];
-                }).toList(),
-              ),
-              pw.SizedBox(height: 12),
-              pw.Text(
-                'Generated on ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
-            ],
+
+                pw.SizedBox(height: 6),
+
+                // 🏙️ CITY
+                pw.Text(
+                  'شہر: $selectedCity',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(font: urduFont, fontSize: 11),
+                ),
+
+                pw.SizedBox(height: 10),
+
+
+                // 📋 TABLE
+                pw.Table.fromTextArray(
+                  headerAlignment: pw.Alignment.centerRight,
+                  cellAlignment: pw.Alignment.centerRight,
+                  headerStyle: pw.TextStyle(
+                    font: urduFont,
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                  cellStyle: pw.TextStyle(
+                    font: urduFont,
+                    fontSize: 9,
+                  ),
+                  headers: ['پتہ','فون نمبر', 'نام'],
+                  data: customers.map((doc) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    return [
+                      d['address'] ?? '',
+                      d['phone'] ?? '',
+                      d['name'] ?? '',
+                    ];
+                  }).toList(),
+                ),
+
+                pw.SizedBox(height: 12),
+
+
+                // 🕒 FOOTER DATE
+                pw.Text(
+                  'پرنٹ کی تاریخ: ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(font: urduFont, fontSize: 9),
+                ),
+
+                pw.SizedBox(height: 6),
+
+                // 🖥️ SYSTEM NOTE
+                pw.Text(
+                  'یہ فہرست کمپیوٹر سے تیار کی گئی ہے',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(font: urduFont, fontSize: 8),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -89,6 +276,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       onLayout: (format) async => pdf.save(),
     );
   }
+
 
   @override
   void dispose() {
@@ -100,11 +288,11 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Customers"),
+        title: const Text("گاہک"),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add),
-            tooltip: "Add Customer",
+            tooltip: "نیا گاہک",
             onPressed: () {
               Navigator.push(
                 context,
@@ -126,7 +314,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                   controller: searchCtrl,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: "Search customer by name",
+                    hintText: "گاہک کا نام تلاش کریں",
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.white,
@@ -180,7 +368,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                               setState(() => selectedCity = v);
                             },
                             decoration: const InputDecoration(
-                              labelText: 'Filter by City',
+                              labelText: 'شہر کے مطابق فلٹر',
                               border: OutlineInputBorder(),
                               isDense: true,
                             ),
@@ -190,7 +378,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      tooltip: "Print Filtered Customers",
+                      tooltip: "منتخب گاہک پرنٹ کریں",
                       icon: const Icon(Icons.print),
                       onPressed: () async {
                         final snap = await FirebaseFirestore.instance
@@ -222,7 +410,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                         if (filtered.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("No customers to print"),
+                              content: Text("کوئی گاہک موجود نہیں"),
                             ),
                           );
                           return;
@@ -271,7 +459,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             }).toList();
 
             if (filtered.isEmpty) {
-              return const Center(child: Text("No customers found"));
+              return const Center(child: Text("کوئی گاہک موجود نہیں"));
             }
 
             return ListView.builder(
@@ -292,7 +480,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                         name.isEmpty ? "C" : name[0].toUpperCase(),
                       ),
                     ),
-                    title: Text(name.isEmpty ? "Unnamed Customer" : name),
+                    title: Text(name.isEmpty ? "بے نام گاہک" : name),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
