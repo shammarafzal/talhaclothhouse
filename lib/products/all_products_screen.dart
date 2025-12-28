@@ -179,7 +179,7 @@ class AllProductsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("All Products"),
+        title: const Text("تمام اشیاء"),
         actions: [
           IconButton(
             icon: const Icon(Icons.print),

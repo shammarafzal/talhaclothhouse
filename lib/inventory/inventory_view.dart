@@ -8,7 +8,7 @@ class InventoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Inventory"),
+        title: const Text("اسٹاک"),
       ),
       body: Container(
         color: Colors.grey.shade100,
@@ -33,7 +33,7 @@ class InventoryScreen extends StatelessWidget {
 
             if (docs.isEmpty) {
               return const Center(
-                child: Text("No inventory items found"),
+                child: Text("کوئی اسٹاک آئٹمز نہیں ملے"),
               );
             }
 

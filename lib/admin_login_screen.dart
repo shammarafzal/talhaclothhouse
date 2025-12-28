@@ -17,7 +17,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool _isLoading = false;
   bool _showPassword = false;
 
-  // 🔐 Hardcoded admin email (must exist in Firebase Auth)
+  // 🔐 ایڈمن ای میل (Firebase Auth میں موجود ہونی چاہیے)
   static const String _adminEmail = 'ammarafzal075@gmail.com';
 
   @override
@@ -34,7 +34,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     try {
       final password = _passwordCtrl.text.trim();
 
-      // Sign in using hardcoded email + entered password
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _adminEmail,
         password: password,
@@ -42,17 +41,18 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       if (!mounted) return;
 
-      // ✅ Login success → go to HomeScreen
+      // ✅ کامیاب لاگ اِن → ہوم اسکرین
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      String msg = "Login failed";
+      String msg = "لاگ اِن ناکام ہو گیا";
+
       if (e.code == 'wrong-password') {
-        msg = "Incorrect password";
+        msg = "غلط پاس ورڈ";
       } else if (e.code == 'user-not-found') {
-        msg = "Admin user not found in Firebase Auth";
+        msg = "ایڈمن صارف موجود نہیں";
       } else {
         msg = e.message ?? msg;
       }
@@ -62,7 +62,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(content: Text("خرابی: $e")),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -97,8 +97,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         color: Colors.blueGrey,
                       ),
                       const SizedBox(height: 12),
+
                       const Text(
-                        "Admin Login",
+                        "ایڈمن لاگ اِن",
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
@@ -106,18 +107,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        "Enter admin password to access dashboard",
+                        "ڈیش بورڈ تک رسائی کے لیے ایڈمن پاس ورڈ درج کریں",
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
+
                       const SizedBox(height: 24),
 
-                      // Password field only
+                      // 🔑 پاس ورڈ فیلڈ
                       TextFormField(
                         controller: _passwordCtrl,
                         obscureText: !_showPassword,
                         decoration: InputDecoration(
-                          labelText: "Admin Password",
+                          labelText: "ایڈمن پاس ورڈ",
                           prefixIcon: const Icon(Icons.password),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -138,7 +140,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         onFieldSubmitted: (_) => _handleLogin(),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
-                            return "Password is required";
+                            return "پاس ورڈ درج کرنا ضروری ہے";
                           }
                           return null;
                         },
@@ -161,7 +163,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           )
                               : const Icon(Icons.login),
                           label: Text(
-                            _isLoading ? "Checking..." : "Login",
+                            _isLoading ? "چیک ہو رہا ہے..." : "لاگ اِن کریں",
                           ),
                           style: ElevatedButton.styleFrom(
                             padding:
@@ -175,7 +177,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                       const SizedBox(height: 8),
                       const Text(
-                        "Talha Cloth House – Admin Panel",
+                        "طلحہ کلاتھ ہاؤس – ایڈمن پینل",
                         style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],

@@ -21,7 +21,9 @@ class _AddOldBillScreenState extends State<AddOldBillScreen> {
 
     if (billNo.isEmpty || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter valid bill number & amount")),
+        const SnackBar(
+          content: Text("درست بل نمبر اور رقم درج کریں"),
+        ),
       );
       return;
     }
@@ -43,10 +45,10 @@ class _AddOldBillScreenState extends State<AddOldBillScreen> {
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(content: Text("خرابی: $e")),
       );
     } finally {
-      setState(() => saving = false);
+      if (mounted) setState(() => saving = false);
     }
   }
 
@@ -60,7 +62,9 @@ class _AddOldBillScreenState extends State<AddOldBillScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Old Bill")),
+      appBar: AppBar(
+        title: const Text("پرانا بل شامل کریں"),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 450),
@@ -75,29 +79,40 @@ class _AddOldBillScreenState extends State<AddOldBillScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "Old Customer Bill",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    "پرانے گاہک کا بل",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 16),
+
+                  // 🧾 Old Bill Number
                   TextField(
                     controller: billNoController,
                     decoration: const InputDecoration(
-                      labelText: "Old Bill Number",
+                      labelText: "پرانا بل نمبر",
                       border: OutlineInputBorder(),
                     ),
                   ),
+
                   const SizedBox(height: 12),
+
+                  // 💰 Bill Amount
                   TextField(
                     controller: amountController,
                     keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      labelText: "Bill Amount",
-                      prefixText: "Rs ",
+                      labelText: "بل کی رقم",
+                      prefixText: "روپے ",
                       border: OutlineInputBorder(),
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
+                  // 💾 Save Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -106,11 +121,12 @@ class _AddOldBillScreenState extends State<AddOldBillScreen> {
                           ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child:
-                        CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                           : const Icon(Icons.save),
-                      label: const Text("Save Old Bill"),
+                      label: Text(
+                        saving ? "محفوظ ہو رہا ہے..." : "پرانا بل محفوظ کریں",
+                      ),
                     ),
                   )
                 ],

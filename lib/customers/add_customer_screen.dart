@@ -36,7 +36,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   Future<void> saveCustomer() async {
     if (name.text.trim().isEmpty || phone.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Name and phone are required")),
+        const SnackBar(content: Text("نام اور فون نمبر ضروری ہیں")),
       );
       return;
     }
@@ -58,7 +58,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Customer updated")),
+          const SnackBar(content: Text("گاہک کی معلومات اپڈیٹ ہو گئیں")),
         );
       } else {
         await FirebaseFirestore.instance.collection("customers").add({
@@ -68,7 +68,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Customer saved")),
+          const SnackBar(content: Text("گاہک محفوظ ہو گیا")),
         );
       }
 
@@ -76,7 +76,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving: $e")),
+        SnackBar(content: Text("محفوظ کرنے میں خرابی: $e")),
       );
     } finally {
       if (mounted) setState(() => loading = false);
@@ -93,8 +93,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEdit ? "Edit Customer" : "Add Customer";
-    final btnText = widget.isEdit ? "Update Customer" : "Save Customer";
+    final title = widget.isEdit ? "گاہک میں ترمیم کریں" : "نیا گاہک شامل کریں";
+    final btnText = widget.isEdit ? "گاہک اپڈیٹ کریں" : "گاہک محفوظ کریں";
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
@@ -115,46 +115,53 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      "Customer Details",
+                      "گاہک کی تفصیل",
                       style:
                       TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 16),
+
                     TextField(
                       controller: name,
                       decoration: InputDecoration(
-                        labelText: "Customer Name",
+                        labelText: "گاہک کا نام",
                         prefixIcon: const Icon(Icons.person),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 12),
+
                     TextField(
                       controller: phone,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        labelText: "Phone",
+                        labelText: "فون نمبر",
                         prefixIcon: const Icon(Icons.phone),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 12),
+
                     TextField(
                       controller: address,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: "Address",
+                        labelText: "پتہ",
                         prefixIcon: const Icon(Icons.location_on),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
+
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -163,10 +170,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                             ? const SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child:
+                          CircularProgressIndicator(strokeWidth: 2),
                         )
                             : const Icon(Icons.save),
-                        label: Text(loading ? "Saving..." : btnText),
+                        label: Text(
+                          loading ? "محفوظ ہو رہا ہے..." : btnText,
+                        ),
                       ),
                     )
                   ],
