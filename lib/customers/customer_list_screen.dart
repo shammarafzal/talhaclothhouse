@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:ui' as ui;
 
 import 'add_customer_screen.dart';
 import 'customer_detail_screen.dart';
@@ -194,121 +195,93 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
     final headerWidget = await buildUrduHeader();
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a5,
-        margin: const pw.EdgeInsets.all(18),
-        build: (context) {
-          return pw.Directionality(
-            textDirection: pw.TextDirection.rtl,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-              children: [
-                // ✅ HEADER
-                headerWidget,
+        margin: const pw.EdgeInsets.all(6),
+        textDirection: pw.TextDirection.rtl,
 
-                pw.SizedBox(height: 10),
+        // ✅ HEADER REPEATS ON EVERY PAGE
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            headerWidget,
+            pw.SizedBox(height: 10),
+          ],
+        ),
 
-                // 🧾 TITLE
-                pw.Text(
-                  'گاہکوں کی فہرست',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-
-                pw.SizedBox(height: 6),
-
-                // 🏙️ CITY
-                pw.Text(
-                  'شہر: $selectedCity',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(font: urduFont, fontSize: 11),
-                ),
-
-                pw.SizedBox(height: 10),
-
-
-                // 📋 TABLE
-                pw.Table.fromTextArray(
-                  headerAlignment: pw.Alignment.centerRight,
-                  cellAlignment: pw.Alignment.centerRight,
-                  headerStyle: pw.TextStyle(
-                    font: urduFont,
-                    fontWeight: pw.FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                  cellStyle: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 12,
-                  ),
-                  headers: ['پتہ','فون نمبر', 'نام'],
-                  data: customers.map((doc) {
-                    final d = doc.data() as Map<String, dynamic>;
-                    return [
-                      d['address'] ?? '',
-                      d['phone'] ?? '',
-                      d['name'] ?? '',
-                    ];
-                  }).toList(),
-                ),
-
-                pw.SizedBox(height: 12),
-
-
-                // 🕒 FOOTER DATE
-                pw.Text(
-                  'پرنٹ کی تاریخ: ',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Text(
-                  '$dateStr',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Text(
-                  'وقت:',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 9,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Text(
-                  timeStr,
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    font: urduFont,
-                    fontSize: 9,
-                  ),
-                ),
-
-                pw.SizedBox(height: 6),
-
-                // 🖥️ SYSTEM NOTE
-                pw.Text(
-                  'یہ فہرست کمپیوٹر سے تیار کی گئی ہے',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(font: urduFont, fontSize: 8),
-                ),
-              ],
+        build: (context) => [
+          // 🧾 TITLE
+          pw.Text(
+            'گاہکوں کی فہرست',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              font: urduFont,
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
             ),
-          );
-        },
+          ),
+
+          pw.SizedBox(height: 6),
+
+          // 🏙️ CITY
+          pw.Text(
+            'شہر: $selectedCity',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(font: urduFont, fontSize: 11),
+          ),
+
+          pw.SizedBox(height: 10),
+
+          // 📋 TABLE (AUTO SPLITS ACROSS PAGES)
+          pw.Table.fromTextArray(
+            headerAlignment: pw.Alignment.centerRight,
+            cellAlignment: pw.Alignment.centerRight,
+            headerStyle: pw.TextStyle(
+              font: urduFont,
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 10,
+            ),
+            cellStyle: pw.TextStyle(
+              font: urduFont,
+              fontSize: 12,
+            ),
+            headers: ['پتہ', 'فون نمبر', 'نام'],
+            data: customers.map((doc) {
+              final d = doc.data() as Map<String, dynamic>;
+              return [
+                d['address'] ?? '',
+                d['phone'] ?? '',
+                d['name'] ?? '',
+              ];
+            }).toList(),
+          ),
+
+          pw.SizedBox(height: 12),
+
+          // 🕒 FOOTER DATE
+          pw.Text(
+            'پرنٹ کی تاریخ: $dateStr    وقت: $timeStr',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              font: urduFont,
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+
+
+          pw.SizedBox(height: 6),
+
+          // 🖥️ SYSTEM NOTE
+          pw.Text(
+            'یہ فہرست کمپیوٹر سے تیار کی گئی ہے',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(font: urduFont, fontSize: 8),
+          ),
+        ],
       ),
     );
+
 
     await Printing.layoutPdf(
       onLayout: (format) async => pdf.save(),
@@ -324,8 +297,10 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Scaffold(
+        appBar: AppBar(
         title: const Text("گاہک"),
         actions: [
           IconButton(
@@ -484,12 +459,17 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
               final data = d.data();
               final name =
               (data['name'] ?? '').toString().toLowerCase();
+              final phone =
+              (data['phone'] ?? '').toString().toLowerCase();
               final city =
               (data['city'] ?? data['address'] ?? '').toString();
 
-              if (query.isNotEmpty && !name.contains(query)) {
+              if (query.isNotEmpty &&
+                  !name.contains(query) &&
+                  !phone.contains(query)) {
                 return false;
               }
+
               if (selectedCity != 'All' && city != selectedCity) {
                 return false;
               }
@@ -571,6 +551,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
           },
         ),
       ),
+        ),
     );
   }
 }

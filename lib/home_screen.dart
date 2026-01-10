@@ -156,7 +156,7 @@ class TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const CircleAvatar(child: Icon(Icons.person)),
+          // const CircleAvatar(child: Icon(Icons.person)),
         ],
       ),
     );
