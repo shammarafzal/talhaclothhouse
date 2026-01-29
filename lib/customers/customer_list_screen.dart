@@ -243,7 +243,7 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
             ),
             cellStyle: pw.TextStyle(
               font: urduFont,
-              fontSize: 12,
+              fontSize: 10,
             ),
             headers: ['پتہ', 'فون نمبر', 'نام'],
             data: customers.map((doc) {

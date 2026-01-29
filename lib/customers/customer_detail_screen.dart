@@ -6,6 +6,7 @@ import 'add_customer_screen.dart';
 import 'view_customer_invoice_screen.dart';
 import 'add_old_bill_screen.dart';
 import 'view_oldbill.dart';
+import 'dart:ui' as ui;
 
 class CustomerDetailScreen extends StatelessWidget {
   final String customerId;
@@ -21,13 +22,15 @@ class CustomerDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (customerData['name'] ?? '').toString();
 
-    return Scaffold(
+    return Directionality(
+        textDirection: ui.TextDirection.rtl,
+        child: Scaffold(
       appBar: AppBar(
-        title: Text(name.isEmpty ? "Customer" : name),
+        title: Text(name.isEmpty ? "گاہک" : name),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: "Edit Customer",
+            tooltip: "گاہک میں ترمیم کریں",
             onPressed: () {
               Navigator.push(
                 context,
@@ -42,7 +45,7 @@ class CustomerDetailScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.history),
-            tooltip: "Add Old Bill",
+            tooltip: "پرانا بل شامل کریں",
             onPressed: () {
               Navigator.push(
                 context,
@@ -69,6 +72,7 @@ class CustomerDetailScreen extends StatelessWidget {
           ),
         ),
       ),
+        ),
     );
   }
 
@@ -99,7 +103,7 @@ class CustomerDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name.isEmpty ? "Customer" : name,
+                    name.isEmpty ? "گاہک" : name,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
@@ -129,7 +133,7 @@ class CustomerDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Sales & Bills",
+              "سیلز اور بل",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -154,14 +158,14 @@ class CustomerDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Invoices",
+                      "سیلز انوائس",
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 6),
                     if (docs.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(8),
-                        child: Text("No invoices yet."),
+                        child: Text("ابھی کوئی انوائس موجود نہیں"),
                       )
                     else
                       ListView.builder(
@@ -191,9 +195,9 @@ class CustomerDetailScreen extends StatelessWidget {
                             child: ListTile(
                               leading:
                               const Icon(Icons.receipt_long),
-                              title: Text("Invoice #$invoiceNo"),
+                              title: Text("انوائس نمبر: $invoiceNo"),
                               subtitle: Text(
-                                "$date • Total: ${total.toStringAsFixed(0)} • Paid: ${paid.toStringAsFixed(0)}",
+                                "$date • کل رقم: ${total.toStringAsFixed(0)} • ادا شدہ: ${paid.toStringAsFixed(0)}",
                               ),
                               trailing: Chip(
                                 label: Text(status,
@@ -234,7 +238,7 @@ class CustomerDetailScreen extends StatelessWidget {
             // ================= OLD BILLS =================
 
             const Text(
-              "Old Bills",
+              "پرانے بل",
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
@@ -256,7 +260,7 @@ class CustomerDetailScreen extends StatelessWidget {
                 if (docs.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.all(8),
-                    child: Text("No old bills."),
+                    child: Text("کوئی پرانا بل موجود نہیں"),
                   );
                 }
 
@@ -267,7 +271,7 @@ class CustomerDetailScreen extends StatelessWidget {
                   itemBuilder: (ctx, i) {
                     final m = docs[i].data();
                     final billNo =
-                    (m['billNumber'] ?? 'Old Bill').toString();
+                    (m['billNumber'] ?? 'پرانا بل').toString();
                     final amount =
                     (m['amount'] ?? 0).toDouble();
 
@@ -283,13 +287,12 @@ class CustomerDetailScreen extends StatelessWidget {
                         leading: const Icon(Icons.history),
                         title: Text(billNo),
                         subtitle: Text(
-                          "Date: $dateText • Amount: ${amount.toStringAsFixed(0)}",
+                          "تاریخ: $dateText • رقم: ${amount.toStringAsFixed(0)}",
                         ),
                         trailing: const Chip(
-                          label: Text("Old",
+                          label: Text("پرانا",
                               style: TextStyle(fontSize: 11)),
-                          backgroundColor:
-                          Color(0xFFE3F2FD),
+                          backgroundColor: Color(0xFFE3F2FD),
                         ),
                         onTap: () {
                           Navigator.push(
